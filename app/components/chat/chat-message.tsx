@@ -2,14 +2,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Message } from "ai";
 import { BotIcon, UserIcon } from "lucide-react";
-import { ChatToolInvocations } from "./chat-tool-invocations";
 
+import { AnalyticsVisualization } from "./analytics-visualization";
+import { ChatToolInvocations } from "./chat-tool-invocations";
 interface ChatMessageProps {
   message: Message;
   addToolResult: (args: { toolCallId: string; result: string }) => void;
 }
 
 export function ChatMessage({ message, addToolResult }: ChatMessageProps) {
+  // Try to parse the content as JSON to check for visualization data
+  let visualizationData = null;
+  try {
+    const parsed = JSON.parse(message.content);
+    if (parsed.type === "lineChart" && Array.isArray(parsed.data)) {
+      visualizationData = parsed;
+    }
+  } catch (e) {
+    // Not JSON, treat as regular message
+    console.log(e);
+  }
+
   return (
     <div
       className={cn(
@@ -25,11 +38,18 @@ export function ChatMessage({ message, addToolResult }: ChatMessageProps) {
         )}
       </div>
       <div className="flex-1 space-y-2">
-        <Card className="max-w-[90%]">
-          <CardContent className="p-3">
-            <p className="text-sm">{message.content}</p>
-          </CardContent>
-        </Card>
+        {!visualizationData ? (
+          <Card className="max-w-[90%]">
+            <CardContent className="p-3">
+              <p className="text-sm">{message.content}</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <AnalyticsVisualization
+            data={visualizationData.data}
+            type={visualizationData.type}
+          />
+        )}
         {message.toolInvocations && (
           <ChatToolInvocations
             toolInvocations={message.toolInvocations}

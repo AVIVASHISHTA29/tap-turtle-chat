@@ -1,9 +1,7 @@
+import clickhouse from "@/lib/clickhouse";
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { z } from "zod";
-
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
@@ -12,29 +10,62 @@ export async function POST(req: Request) {
     model: openai("gpt-4-turbo"),
     messages,
     tools: {
-      // server-side tool with execute function:
-      getWeatherInformation: {
-        description: "show the weather in a given city to the user",
-        parameters: z.object({ city: z.string() }),
-        execute: async ({}: { city: string }) => {
-          const weatherOptions = ["sunny", "cloudy", "rainy", "snowy", "windy"];
-          return weatherOptions[
-            Math.floor(Math.random() * weatherOptions.length)
-          ];
-        },
-      },
-      // client-side tool that starts user interaction:
-      askForConfirmation: {
-        description: "Ask the user for confirmation.",
-        parameters: z.object({
-          message: z.string().describe("The message to ask for confirmation."),
-        }),
-      },
-      // client-side tool that is automatically executed on the client:
-      getLocation: {
+      executeAnalyticsQuery: {
         description:
-          "Get the user location. Always ask for confirmation before using this tool.",
-        parameters: z.object({}),
+          "Execute an analytics query to get click events data and return the results.",
+        parameters: z.object({
+          timeframe: z
+            .string()
+            .describe(
+              "The timeframe for the query (e.g., '1 hour', '24 hours', '7 days')"
+            ),
+          aggregation: z
+            .string()
+            .describe(
+              "How to aggregate the data (e.g., 'count', 'hourly', 'daily')"
+            ),
+        }),
+        execute: async ({
+          timeframe,
+          aggregation,
+        }: {
+          timeframe: string;
+          aggregation: string;
+        }) => {
+          const sqlQuery = `
+            SELECT 
+              ${
+                aggregation === "hourly"
+                  ? "toStartOfHour(timestamp) as time_bucket"
+                  : "toStartOfDay(timestamp) as time_bucket"
+              },
+              count(*) as click_count
+            FROM events
+            WHERE event_type = 'click'
+              AND timestamp >= now() - INTERVAL ${timeframe}
+            GROUP BY time_bucket
+            ORDER BY time_bucket ASC
+          `;
+
+          try {
+            const queryResponse = await clickhouse.query({
+              query: sqlQuery,
+              format: "JSONEachRow",
+            });
+
+            const results = await queryResponse.json();
+            return {
+              type: "lineChart",
+              data: results.map((row: unknown) => ({
+                timestamp: (row as { time_bucket: string })?.time_bucket ?? "",
+                value: (row as { click_count: number })?.click_count ?? 0,
+              })),
+            };
+          } catch (error) {
+            console.error("Error executing SQL query:", error);
+            throw new Error("Error executing the query.");
+          }
+        },
       },
     },
   });
