@@ -1,9 +1,9 @@
+import clickhouse from "@/lib/clickhouse";
 import { EventType } from "@/types/eventTypes";
 import { NextRequest, NextResponse } from "next/server";
 import * as pako from "pako";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
-import { default as clickhouse } from "../../../lib/clickhouse";
 
 const eventTypeEnum = z.enum([
   "click",
