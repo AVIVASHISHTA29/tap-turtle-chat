@@ -5,6 +5,7 @@ import { BotIcon, UserIcon } from "lucide-react";
 
 import { AnalyticsVisualization } from "./analytics-visualization";
 import { ChatToolInvocations } from "./chat-tool-invocations";
+
 interface ChatMessageProps {
   message: Message;
   addToolResult: (args: { toolCallId: string; result: string }) => void;
@@ -13,14 +14,17 @@ interface ChatMessageProps {
 export function ChatMessage({ message, addToolResult }: ChatMessageProps) {
   // Try to parse the content as JSON to check for visualization data
   let visualizationData = null;
+  let textContent = message.content;
+
   try {
     const parsed = JSON.parse(message.content);
-    if (parsed.type === "lineChart" && Array.isArray(parsed.data)) {
+    if (parsed.type && parsed.data) {
       visualizationData = parsed;
+      textContent = ""; // Clear text content if we have visualization data
     }
   } catch (e) {
-    // Not JSON, treat as regular message
     console.log(e);
+    // Not JSON, treat as regular message
   }
 
   return (
@@ -38,16 +42,19 @@ export function ChatMessage({ message, addToolResult }: ChatMessageProps) {
         )}
       </div>
       <div className="flex-1 space-y-2">
-        {!visualizationData ? (
+        {textContent && (
           <Card className="max-w-[90%]">
             <CardContent className="p-3">
-              <p className="text-sm">{message.content}</p>
+              <p className="text-sm">{textContent}</p>
             </CardContent>
           </Card>
-        ) : (
+        )}
+        {visualizationData && (
           <AnalyticsVisualization
             data={visualizationData.data}
             type={visualizationData.type}
+            title={visualizationData.title}
+            description={visualizationData.description}
           />
         )}
         {message.toolInvocations && (

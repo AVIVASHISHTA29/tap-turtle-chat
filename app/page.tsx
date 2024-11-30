@@ -10,19 +10,20 @@ import { ChatMessage } from "./components/chat/chat-message";
 export default function Chat() {
   const { messages, input, handleInputChange, handleSubmit, addToolResult } =
     useChat({
-      maxSteps: 5,
       api: "/api/chat",
-      async onToolCall({ toolCall }) {
-        if (toolCall.toolName === "getLocation") {
-          const cities = [
-            "New York",
-            "Los Angeles",
-            "Chicago",
-            "San Francisco",
-          ];
-          return cities[Math.floor(Math.random() * cities.length)];
-        }
-      },
+      initialMessages: [
+        {
+          id: "welcome",
+          role: "assistant",
+          content: `Hello! I'm your analytics assistant. I can help you analyze your website's event data. 
+            Try asking me things like:
+            - "Show me clicks from the last 24 hours"
+            - "How many scroll events occurred in the past week?"
+            - "Display hourly mousemove events for today"
+            
+            First, please provide your API key to get started.`,
+        },
+      ],
     });
 
   return (
@@ -40,7 +41,7 @@ export default function Chat() {
           <Input
             value={input}
             onChange={handleInputChange}
-            placeholder="Type a message..."
+            placeholder="Ask about your analytics data..."
             className="flex-1"
           />
           <Button type="submit" size="icon">
