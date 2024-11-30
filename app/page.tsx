@@ -5,7 +5,9 @@ import { Weather } from "@/components/app/weather";
 import { useChat } from "ai/react";
 
 export default function Page() {
-  const { messages, input, setInput, handleSubmit } = useChat();
+  const { messages, input, setInput, handleSubmit } = useChat({
+    api: "/api/chat",
+  });
 
   return (
     <div>
