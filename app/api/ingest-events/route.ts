@@ -71,42 +71,47 @@ export async function POST(req: NextRequest) {
 
     const project_id = rows[0].project_id;
 
-    // Insert or update the session
+    // Insert or update the session - Fix the insert format
     await clickhouse.insert({
       table: "sessions",
-      values: {
-        session_id: session_id,
-        project_id: project_id,
-        timestamp_start: timestamp,
-        page_url: page_url,
-        viewport_width: viewport_width,
-        viewport_height: viewport_height,
-      },
-    });
-
-    // Store each event
-    const insertPromises = events.map((event) => {
-      return clickhouse.insert({
-        table: "events",
-        values: {
-          event_id: uuidv4(),
+      values: [
+        {
+          // Wrap the values in an array
           session_id: session_id,
           project_id: project_id,
-          timestamp: event.timestamp,
-          event_type: event.event_type,
-          element_id: event.element_id,
-          css_selector: event.css_selector,
-          x_position: event.x_position,
-          y_position: event.y_position,
-          metadata: event.metadata ? JSON.stringify(event.metadata) : null,
+          timestamp_start: timestamp,
+          page_url: page_url,
+          viewport_width: viewport_width,
+          viewport_height: viewport_height,
         },
-      });
+      ],
+      format: "JSONEachRow", // Specify the format
     });
 
-    await Promise.all(insertPromises);
+    // Prepare all events in a single batch
+    const eventValues = events.map((event) => ({
+      event_id: uuidv4(),
+      session_id: session_id,
+      project_id: project_id,
+      timestamp: event.timestamp,
+      event_type: event.event_type,
+      element_id: event.element_id,
+      css_selector: event.css_selector,
+      x_position: event.x_position,
+      y_position: event.y_position,
+      metadata: event.metadata ? JSON.stringify(event.metadata) : null,
+    }));
+
+    // Insert all events in a single batch operation
+    await clickhouse.insert({
+      table: "events",
+      values: eventValues,
+      format: "JSONEachRow",
+    });
 
     return NextResponse.json({ status: "success" });
   } catch (error) {
+    // Add better error logging
     if (error instanceof z.ZodError) {
       console.error("Validation Error:", error.errors);
       return NextResponse.json(
@@ -116,7 +121,10 @@ export async function POST(req: NextRequest) {
     }
     console.error("Error processing request:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      {
+        error: "Internal Server Error",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }
