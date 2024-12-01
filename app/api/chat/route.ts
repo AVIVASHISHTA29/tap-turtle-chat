@@ -3,10 +3,6 @@ import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { NextResponse } from "next/server";
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 200 });
-}
-
 export async function POST(request: Request) {
   try {
     const { messages } = await request.json();
