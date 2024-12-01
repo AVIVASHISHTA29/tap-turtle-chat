@@ -16,7 +16,12 @@ export async function POST(request: Request) {
     - getBrowserAnalytics: For showing browser usage statistics
     - getUserEngagement: For showing engagement metrics across different activities
     - getPagePerformance: For comparing performance metrics across pages
-    - getPageHeatmap: For showing heatmap of user interactions
+    - getPageHeatmap: ONLY use for heatmap visualization of click patterns. Do not use this for general click analytics.
+    
+    When users ask about click data or user interactions:
+    - If they specifically request a heatmap, use getPageHeatmap
+    - For general click statistics or metrics, use getUserEngagement
+    - If they specify a chart type (like bar chart), respect their preference and use getUserEngagement
     
     When suggesting visualizations, also recommend appropriate chart types:
     - Area charts: Good for showing trends over time and cumulative data
@@ -25,12 +30,10 @@ export async function POST(request: Request) {
     - Line charts: Perfect for showing trends and continuous data
     - Radar charts: Useful for comparing multiple variables
     - Scatter plots: Great for showing correlations
-    - Heatmaps: Best for showing user interactions and click patterns
+    - Heatmaps: ONLY for showing spatial distribution of clicks on a page layout
     
-    Ask users about their preferred chart type when relevant.
-    Example: "Would you like to see this data as a bar chart or pie chart?"
-    
-    Always provide context and insights with visualizations.`,
+    Always respect user's explicitly requested chart type.
+    If a user asks for specific chart type (e.g., bar chart), do not suggest or use heatmap.`,
     messages,
     maxSteps: 5,
     tools,

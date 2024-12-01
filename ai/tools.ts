@@ -143,7 +143,8 @@ export const browserAnalyticsTool = createTool({
 });
 
 export const userEngagementTool = createTool({
-  description: "Get user engagement metrics",
+  description:
+    "Get user engagement metrics including click statistics and interaction data. Use this for general click analytics when users want traditional charts.",
   parameters: z.object({}),
   execute: async function () {
     const data = generateUserEngagementData();
@@ -175,7 +176,8 @@ export const pagePerformanceTool = createTool({
 });
 
 export const pageHeatmapTool = createTool({
-  description: "Get page heatmap data showing user click patterns",
+  description:
+    "Get page heatmap data showing spatial distribution of user clicks. Only use when heatmap visualization is specifically requested or most appropriate for spatial analysis.",
   parameters: z.object({
     page: z.string().optional().default("home"),
   }),
