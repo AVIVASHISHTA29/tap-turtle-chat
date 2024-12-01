@@ -4,6 +4,7 @@ export enum AnalyticsTool {
   BROWSER_ANALYTICS = "getBrowserAnalytics",
   USER_ENGAGEMENT = "getUserEngagement",
   PAGE_PERFORMANCE = "getPagePerformance",
+  PAGE_HEATMAP = "getPageHeatmap",
 }
 
 export enum ChartType {

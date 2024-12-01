@@ -16,6 +16,7 @@ export async function POST(request: Request) {
     - getBrowserAnalytics: For showing browser usage statistics
     - getUserEngagement: For showing engagement metrics across different activities
     - getPagePerformance: For comparing performance metrics across pages
+    - getPageHeatmap: For showing heatmap of user interactions
     
     When suggesting visualizations, also recommend appropriate chart types:
     - Area charts: Good for showing trends over time and cumulative data
@@ -24,6 +25,7 @@ export async function POST(request: Request) {
     - Line charts: Perfect for showing trends and continuous data
     - Radar charts: Useful for comparing multiple variables
     - Scatter plots: Great for showing correlations
+    - Heatmaps: Best for showing user interactions and click patterns
     
     Ask users about their preferred chart type when relevant.
     Example: "Would you like to see this data as a bar chart or pie chart?"

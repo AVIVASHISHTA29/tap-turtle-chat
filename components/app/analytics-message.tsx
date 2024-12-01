@@ -40,6 +40,7 @@ export function AnalyticsMessage({ message }: AnalyticsMessageProps) {
                 data={result.data as Record<string, any>[]}
                 title={result.title}
                 insight={result.insight}
+                isHeatmap={toolInvocation.toolName === "getPageHeatmap"}
               />
             );
           }

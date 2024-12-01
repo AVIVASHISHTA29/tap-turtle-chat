@@ -51,6 +51,26 @@ const generatePagePerformanceData = () => ({
   ],
 });
 
+const generateHeatmapData = () => ({
+  data: [
+    { x: 150, y: 100, value: 0.8 }, // Navigation area
+    { x: 400, y: 200, value: 0.9 }, // Hero section CTA
+    { x: 600, y: 300, value: 0.5 }, // Product section
+    { x: 200, y: 400, value: 0.3 }, // About section
+    { x: 700, y: 500, value: 0.6 }, // Footer links
+    { x: 800, y: 600, value: 0.7 }, // Sidebar
+    { x: 900, y: 700, value: 0.4 }, // Footer
+    { x: 1000, y: 800, value: 0.2 }, // Sidebar
+    { x: 1100, y: 900, value: 0.1 }, // Footer
+    { x: 1200, y: 1000, value: 0.9 }, // Hero section CTA
+    { x: 1300, y: 1100, value: 0.5 }, // Product section
+    { x: 1400, y: 1200, value: 0.3 }, // About section
+    { x: 1500, y: 1300, value: 0.6 }, // Footer links
+    { x: 1600, y: 1400, value: 0.7 }, // Sidebar
+    { x: 1700, y: 1500, value: 0.4 }, // Footer
+  ],
+});
+
 export const visitorsTrendTool = createTool({
   description: "Get visitor trends over time with multiple metrics",
   parameters: z.object({
@@ -132,10 +152,29 @@ export const pagePerformanceTool = createTool({
   },
 });
 
+export const pageHeatmapTool = createTool({
+  description: "Get page heatmap data showing user click patterns",
+  parameters: z.object({
+    page: z.string().optional().default("home"),
+  }),
+  execute: async function ({ page }) {
+    const data = generateHeatmapData();
+    return {
+      type: AnalyticsTool.PAGE_HEATMAP,
+      data: data.data,
+      title: `Click Heatmap - ${page} page`,
+      insight:
+        "The hero section CTA and main navigation receive the most clicks, while the footer area shows moderate engagement.",
+      isHeatmap: true,
+    };
+  },
+});
+
 export const tools = {
   getVisitorsTrend: visitorsTrendTool,
   getDeviceDistribution: deviceDistributionTool,
   getBrowserAnalytics: browserAnalyticsTool,
   getUserEngagement: userEngagementTool,
   getPagePerformance: pagePerformanceTool,
+  getPageHeatmap: pageHeatmapTool,
 };

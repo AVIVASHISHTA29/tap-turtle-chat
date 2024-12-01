@@ -33,6 +33,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { HeatmapVisualization } from "./heatmap-visualization";
 
 interface AnalyticsVisualizationProps {
   type: string;
@@ -40,6 +41,7 @@ interface AnalyticsVisualizationProps {
   title: string;
   insight: string;
   preferredChart?: ChartType;
+  isHeatmap?: boolean;
 }
 
 const getChartColors = (isDark = false) => ({
@@ -71,6 +73,7 @@ export function AnalyticsVisualization({
   title,
   insight,
   preferredChart,
+  isHeatmap = false,
 }: AnalyticsVisualizationProps) {
   const [selectedChart, setSelectedChart] = useState<ChartType>(
     preferredChart || ChartType.BAR
@@ -307,6 +310,24 @@ export function AnalyticsVisualization({
       </ResponsiveContainer>
     );
   };
+
+  if (isHeatmap) {
+    return (
+      <Card className="p-6 bg-card">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+          <p className="text-sm text-muted-foreground mt-1">{insight}</p>
+        </div>
+        <div className="w-full h-[600px]">
+          <HeatmapVisualization
+            data={data as { x: number; y: number; value: number }[]}
+            width={800}
+            height={600}
+          />
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6 bg-card">
