@@ -2,6 +2,7 @@ import { tools } from "@/ai/tools";
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { NextResponse } from "next/server";
+export const runtime = "edge";
 
 export async function POST(request: Request) {
   try {
