@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { ChartType } from "@/ai/types";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Message } from "ai";
@@ -31,6 +32,7 @@ export function AnalyticsMessage({ message }: AnalyticsMessageProps) {
               insight: string;
               type: string;
               data: unknown;
+              preferredChart?: ChartType;
             };
 
             return (
@@ -40,6 +42,7 @@ export function AnalyticsMessage({ message }: AnalyticsMessageProps) {
                 data={result.data as Record<string, any>[]}
                 title={result.title}
                 insight={result.insight}
+                preferredChart={result.preferredChart}
                 isHeatmap={toolInvocation.toolName === "getPageHeatmap"}
               />
             );
