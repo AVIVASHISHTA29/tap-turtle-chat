@@ -53,21 +53,35 @@ const generatePagePerformanceData = () => ({
 
 const generateHeatmapData = () => ({
   data: [
-    { x: 150, y: 100, value: 0.8 }, // Navigation area
-    { x: 400, y: 200, value: 0.9 }, // Hero section CTA
-    { x: 600, y: 300, value: 0.5 }, // Product section
-    { x: 200, y: 400, value: 0.3 }, // About section
-    { x: 700, y: 500, value: 0.6 }, // Footer links
-    { x: 800, y: 600, value: 0.7 }, // Sidebar
-    { x: 900, y: 700, value: 0.4 }, // Footer
-    { x: 1000, y: 800, value: 0.2 }, // Sidebar
-    { x: 1100, y: 900, value: 0.1 }, // Footer
-    { x: 1200, y: 1000, value: 0.9 }, // Hero section CTA
-    { x: 1300, y: 1100, value: 0.5 }, // Product section
-    { x: 1400, y: 1200, value: 0.3 }, // About section
-    { x: 1500, y: 1300, value: 0.6 }, // Footer links
-    { x: 1600, y: 1400, value: 0.7 }, // Sidebar
-    { x: 1700, y: 1500, value: 0.4 }, // Footer
+    { x: 10, y: 5, value: 0.3 },
+    { x: 20, y: 5, value: 0.4 },
+    { x: 30, y: 5, value: 0.5 },
+
+    { x: 50, y: 30, value: 1 },
+    { x: 45, y: 25, value: 1 },
+    { x: 55, y: 25, value: 1 },
+
+    { x: 30, y: 50, value: 0.5 },
+    { x: 50, y: 50, value: 0.8 },
+    { x: 70, y: 50, value: 0.4 },
+
+    { x: 85, y: 40, value: 1 },
+    { x: 85, y: 50, value: 1 },
+    { x: 85, y: 60, value: 1 },
+
+    { x: 0, y: 0, value: 10 },
+    { x: 0, y: 0, value: 10 },
+    { x: 0, y: 0, value: 10 },
+
+    { x: 20, y: 90, value: 0.3 },
+    { x: 40, y: 90, value: 0.2 },
+    { x: 60, y: 90, value: 0.3 },
+    { x: 80, y: 90, value: 0.2 },
+
+    { x: 40, y: 70, value: 0.6 },
+    { x: 60, y: 70, value: 0.5 },
+    { x: 30, y: 40, value: 0.4 },
+    { x: 70, y: 40, value: 0.3 },
   ],
 });
 
