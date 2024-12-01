@@ -18,12 +18,13 @@ export async function POST(request: Request) {
     - getPagePerformance: For comparing performance metrics across pages
     - getPageHeatmap: ONLY use for heatmap visualization of click patterns. Do not use this for general click analytics.
     
-    When users ask about click data or user interactions:
-    - If they specifically request a heatmap, use getPageHeatmap
-    - For general click statistics or metrics, use getUserEngagement
-    - If they specify a chart type (like bar chart), respect their preference and use getUserEngagement
+    When users specify a chart type in their query:
+    - Always pass the preferredChart parameter to the appropriate tool
+    - Example: "Show me visitor trends as line chart" -> Call getVisitorsTrend with preferredChart: "line"
+    - Example: "Display browser stats in pie chart" -> Call getBrowserAnalytics with preferredChart: "pie"
+    - Example: "Show device distribution as bar chart" -> Call getDeviceDistribution with preferredChart: "bar"
     
-    When suggesting visualizations, also recommend appropriate chart types:
+    Chart types and their use cases:
     - Area charts: Good for showing trends over time and cumulative data
     - Bar charts: Excellent for comparing quantities across categories
     - Pie charts: Best for showing proportions of a whole
@@ -32,8 +33,15 @@ export async function POST(request: Request) {
     - Scatter plots: Great for showing correlations
     - Heatmaps: ONLY for showing spatial distribution of clicks on a page layout
     
-    Always respect user's explicitly requested chart type.
-    If a user asks for specific chart type (e.g., bar chart), do not suggest or use heatmap.`,
+    Default chart types (used when no preference specified):
+    - Visitor Trends: Area chart
+    - Device Distribution: Pie chart
+    - Browser Analytics: Bar chart
+    - User Engagement: Line chart
+    - Page Performance: Bar chart
+    
+    Always extract and pass the user's preferred chart type when specified in their query.
+    Respect the user's chart type preference even if it differs from the default.`,
     messages,
     maxSteps: 5,
     tools,

@@ -93,27 +93,41 @@ const generateHeatmapData = () => {
   return { data };
 };
 
+const chartTypeSchema = z
+  .enum([
+    ChartType.AREA,
+    ChartType.BAR,
+    ChartType.PIE,
+    ChartType.LINE,
+    ChartType.RADAR,
+    ChartType.SCATTER,
+  ])
+  .optional();
+
 export const visitorsTrendTool = createTool({
   description: "Get visitor trends over time with multiple metrics",
   parameters: z.object({
     days: z.number().optional().default(7),
+    preferredChart: chartTypeSchema,
   }),
-  execute: async function ({ days }) {
+  execute: async function ({ days, preferredChart }) {
     return {
       type: AnalyticsTool.VISITORS_TREND,
       data: generateTimeSeriesData(days),
       title: `Visitor Trends - Last ${days} Days`,
       insight:
         "Visitor traffic shows a 15% increase compared to the previous period, with peak activity during weekends.",
-      preferredChart: ChartType.AREA,
+      preferredChart: preferredChart || ChartType.AREA,
     };
   },
 });
 
 export const deviceDistributionTool = createTool({
   description: "Get device usage distribution",
-  parameters: z.object({}),
-  execute: async function () {
+  parameters: z.object({
+    preferredChart: chartTypeSchema,
+  }),
+  execute: async function ({ preferredChart }) {
     const data = generateDeviceData();
     return {
       type: AnalyticsTool.DEVICE_DISTRIBUTION,
@@ -121,15 +135,17 @@ export const deviceDistributionTool = createTool({
       title: "Device Distribution",
       insight:
         "Mobile usage has increased by 8% this month, suggesting a need to optimize mobile experience.",
-      preferredChart: ChartType.PIE,
+      preferredChart: preferredChart || ChartType.PIE,
     };
   },
 });
 
 export const browserAnalyticsTool = createTool({
   description: "Get browser usage analytics",
-  parameters: z.object({}),
-  execute: async function () {
+  parameters: z.object({
+    preferredChart: chartTypeSchema,
+  }),
+  execute: async function ({ preferredChart }) {
     const data = generateBrowserData();
     return {
       type: AnalyticsTool.BROWSER_ANALYTICS,
@@ -137,7 +153,7 @@ export const browserAnalyticsTool = createTool({
       title: "Browser Distribution",
       insight:
         "Chrome dominates with 55% share. Consider prioritizing Chrome-specific optimizations.",
-      preferredChart: ChartType.BAR,
+      preferredChart: preferredChart || ChartType.BAR,
     };
   },
 });
@@ -145,8 +161,10 @@ export const browserAnalyticsTool = createTool({
 export const userEngagementTool = createTool({
   description:
     "Get user engagement metrics including click statistics and interaction data. Use this for general click analytics when users want traditional charts.",
-  parameters: z.object({}),
-  execute: async function () {
+  parameters: z.object({
+    preferredChart: chartTypeSchema,
+  }),
+  execute: async function ({ preferredChart }) {
     const data = generateUserEngagementData();
     return {
       type: AnalyticsTool.USER_ENGAGEMENT,
@@ -154,15 +172,17 @@ export const userEngagementTool = createTool({
       title: "User Engagement Metrics",
       insight:
         "Comments and likes show strong engagement. Consider promoting sharing features more prominently.",
-      preferredChart: ChartType.LINE,
+      preferredChart: preferredChart || ChartType.LINE,
     };
   },
 });
 
 export const pagePerformanceTool = createTool({
   description: "Get page performance metrics",
-  parameters: z.object({}),
-  execute: async function () {
+  parameters: z.object({
+    preferredChart: chartTypeSchema,
+  }),
+  execute: async function ({ preferredChart }) {
     const data = generatePagePerformanceData();
     return {
       type: AnalyticsTool.PAGE_PERFORMANCE,
@@ -170,7 +190,7 @@ export const pagePerformanceTool = createTool({
       title: "Page Performance Metrics",
       insight:
         "The products page has a higher bounce rate. Consider optimizing page load time and content structure.",
-      preferredChart: ChartType.BAR,
+      preferredChart: preferredChart || ChartType.BAR,
     };
   },
 });
