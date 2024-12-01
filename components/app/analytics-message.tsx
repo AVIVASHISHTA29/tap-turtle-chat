@@ -15,15 +15,15 @@ export function AnalyticsMessage({ message }: AnalyticsMessageProps) {
   return (
     <Card
       className={cn(
-        "mb-4 p-4",
+        "mb-2 md:mb-4 p-2 md:p-4",
         message.role === "assistant" ? "bg-muted" : "bg-primary/5"
       )}
     >
       <div className="flex flex-col gap-2">
-        <div className="font-medium">
+        <div className="text-sm md:text-base font-medium">
           {message.role === "assistant" ? "AI Assistant" : "You"}
         </div>
-        <div className="text-sm">{message.content}</div>
+        <div className="text-xs md:text-sm">{message.content}</div>
 
         {message.toolInvocations?.map((toolInvocation) => {
           if (toolInvocation.state === "result") {
@@ -50,7 +50,7 @@ export function AnalyticsMessage({ message }: AnalyticsMessageProps) {
           return (
             <div
               key={toolInvocation.toolCallId}
-              className="text-sm text-muted-foreground"
+              className="text-xs md:text-sm text-muted-foreground"
             >
               Loading visualization...
             </div>

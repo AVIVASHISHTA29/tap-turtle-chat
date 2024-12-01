@@ -122,31 +122,50 @@ export function AnalyticsVisualization({
   }, [data, selectedChart]);
 
   const renderChart = () => {
+    // Add these common props for better mobile display
+    const commonAxisProps = {
+      tick: {
+        fontSize: 10,
+        fill: chartColors.foreground,
+        stroke: "none",
+      },
+      stroke: chartColors.foreground,
+    };
+
+    const commonTooltipProps = {
+      contentStyle: {
+        backgroundColor: chartColors.background,
+        borderColor: chartColors.border,
+        color: chartColors.foreground,
+        fontSize: "12px",
+        padding: "8px",
+      },
+      wrapperStyle: {
+        zIndex: 1000,
+      },
+    };
+
     const chart = (() => {
       switch (selectedChart) {
         case ChartType.AREA:
           return (
-            <AreaChart data={data}>
+            <AreaChart
+              data={data}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
               <XAxis
+                {...commonAxisProps}
                 dataKey={Object.keys(data[0]).find(
                   (key) =>
                     typeof data[0][key] === "string" ||
                     key.toLowerCase().includes("date")
                 )}
-                stroke={chartColors.foreground}
-                tick={{ fill: chartColors.foreground }}
+                angle={-45}
+                textAnchor="end"
+                height={50}
               />
-              <YAxis
-                stroke={chartColors.foreground}
-                tick={{ fill: chartColors.foreground }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: chartColors.background,
-                  borderColor: chartColors.border,
-                  color: chartColors.foreground,
-                }}
-              />
+              <YAxis {...commonAxisProps} width={40} />
+              <Tooltip {...commonTooltipProps} />
               {Object.keys(data[0])
                 .filter((key) => typeof data[0][key] === "number")
                 .map((key, index) => (
@@ -165,27 +184,23 @@ export function AnalyticsVisualization({
 
         case ChartType.BAR:
           return (
-            <BarChart data={data}>
+            <BarChart
+              data={data}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
               <XAxis
+                {...commonAxisProps}
                 dataKey={Object.keys(data[0]).find(
                   (key) =>
                     typeof data[0][key] === "string" ||
                     key.toLowerCase().includes("date")
                 )}
-                stroke={chartColors.foreground}
-                tick={{ fill: chartColors.foreground }}
+                angle={-45}
+                textAnchor="end"
+                height={50}
               />
-              <YAxis
-                stroke={chartColors.foreground}
-                tick={{ fill: chartColors.foreground }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: chartColors.background,
-                  borderColor: chartColors.border,
-                  color: chartColors.foreground,
-                }}
-              />
+              <YAxis {...commonAxisProps} width={40} />
+              <Tooltip {...commonTooltipProps} />
               {Object.keys(data[0])
                 .filter((key) => typeof data[0][key] === "number")
                 .map((key, index) => (
@@ -201,15 +216,16 @@ export function AnalyticsVisualization({
 
         case ChartType.PIE:
           return (
-            <PieChart>
+            <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
               <Pie
                 data={transformedData}
                 dataKey="value"
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                outerRadius={150}
-                label
+                outerRadius="80%"
+                label={(entry) => entry.name}
+                labelLine={false}
               >
                 {transformedData.map((_, index) => (
                   <Cell
@@ -218,28 +234,29 @@ export function AnalyticsVisualization({
                   />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: chartColors.background,
-                  borderColor: chartColors.border,
-                  color: chartColors.foreground,
-                }}
-              />
+              <Tooltip {...commonTooltipProps} />
             </PieChart>
           );
 
         case ChartType.LINE:
           return (
-            <LineChart data={data}>
+            <LineChart
+              data={data}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
               <XAxis
+                {...commonAxisProps}
                 dataKey={Object.keys(data[0]).find(
                   (key) =>
                     typeof data[0][key] === "string" ||
                     key.toLowerCase().includes("date")
                 )}
+                angle={-45}
+                textAnchor="end"
+                height={50}
               />
-              <YAxis />
-              <Tooltip />
+              <YAxis {...commonAxisProps} width={40} />
+              <Tooltip {...commonTooltipProps} />
               {Object.keys(data[0])
                 .filter((key) => typeof data[0][key] === "number")
                 .map((key, index) => (
@@ -247,7 +264,8 @@ export function AnalyticsVisualization({
                     key={key}
                     type="monotone"
                     dataKey={key}
-                    stroke={`hsl(${index * 60}, 70%, 50%)`}
+                    stroke={colorPalette[index]}
+                    dot={false}
                   />
                 ))}
             </LineChart>
@@ -260,65 +278,66 @@ export function AnalyticsVisualization({
               cy="50%"
               outerRadius="80%"
               data={transformedData}
+              margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
             >
-              {transformedData.map((_, index) => (
-                <PolarGrid key={`grid-${index}`} />
-              ))}
-              <PolarAngleAxis dataKey="name" />
-              <PolarRadiusAxis />
+              <PolarGrid stroke={chartColors.border} />
+              <PolarAngleAxis
+                dataKey="name"
+                tick={{ fill: chartColors.foreground, fontSize: 10 }}
+              />
+              <PolarRadiusAxis
+                tick={{ fill: chartColors.foreground, fontSize: 10 }}
+              />
               <Radar
                 name="Values"
                 dataKey="value"
-                stroke="#8884d8"
-                fill="#8884d8"
+                stroke={colorPalette[0]}
+                fill={colorPalette[0]}
                 fillOpacity={0.6}
               />
-              <Tooltip />
+              <Tooltip {...commonTooltipProps} />
             </RadarChart>
           );
 
         case ChartType.SCATTER:
           return (
-            <ScatterChart>
-              <XAxis type="number" dataKey="x" name="x" />
-              <YAxis type="number" dataKey="y" name="y" />
-              <Tooltip cursor={{ strokeDasharray: "3 3" }} />
+            <ScatterChart margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <XAxis {...commonAxisProps} type="number" dataKey="x" name="x" />
+              <YAxis {...commonAxisProps} type="number" dataKey="y" name="y" />
+              <Tooltip {...commonTooltipProps} />
               <Scatter
                 data={scatterData}
-                fill="#8884d8"
+                fill={colorPalette[0]}
                 name="Values"
-                line={{ stroke: "#8884d8" }}
+                line={{ stroke: colorPalette[0] }}
               />
             </ScatterChart>
           );
 
         default:
-          return (
-            <BarChart data={data}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill="#8884d8" />
-            </BarChart>
-          );
+          return null;
       }
     })();
 
     return (
-      <ResponsiveContainer width="100%" height={400}>
-        {chart}
+      <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+        {chart || <div>No chart available</div>}
       </ResponsiveContainer>
     );
   };
 
   if (isHeatmap) {
     return (
-      <Card className="p-6 bg-card">
+      <Card className="p-3 md:p-6 bg-card">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-          <p className="text-sm text-muted-foreground mt-1">{insight}</p>
+          <h3 className="text-base md:text-lg font-semibold text-foreground">
+            {title}
+          </h3>
+          <p className="text-xs md:text-sm text-muted-foreground mt-1">
+            {insight}
+          </p>
         </div>
-        <div className="w-full h-[600px]">
+        <div className="w-full aspect-video">
           <HeatmapVisualization
             data={data as { x: number; y: number; value: number }[]}
             width={800}
@@ -330,15 +349,17 @@ export function AnalyticsVisualization({
   }
 
   return (
-    <Card className="p-6 bg-card">
+    <Card className="p-3 md:p-6 bg-card">
       <div className="mb-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+          <h3 className="text-base md:text-lg font-semibold text-foreground">
+            {title}
+          </h3>
           <Select
             value={selectedChart}
             onValueChange={(value) => setSelectedChart(value as ChartType)}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[140px] md:w-[180px]">
               <SelectValue placeholder="Select chart type" />
             </SelectTrigger>
             <SelectContent>
@@ -350,9 +371,11 @@ export function AnalyticsVisualization({
             </SelectContent>
           </Select>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">{insight}</p>
+        <p className="text-xs md:text-sm text-muted-foreground mt-1">
+          {insight}
+        </p>
       </div>
-      <div className="w-full h-[400px]">{renderChart()}</div>
+      <div className="w-full h-[300px] md:h-[400px]">{renderChart()}</div>
     </Card>
   );
 }

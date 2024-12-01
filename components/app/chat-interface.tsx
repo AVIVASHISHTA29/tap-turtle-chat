@@ -33,9 +33,9 @@ export function ChatInterface() {
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto h-screen flex flex-col max-h-[calc(100vh-10rem)]">
+    <Card className="w-full max-w-4xl mx-auto h-[calc(100vh-120px)] md:h-screen flex flex-col md:max-h-[calc(100vh-10rem)]">
       <div className="flex flex-col h-full">
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea className="flex-1 p-2 md:p-4">
           {messages.length === 0 && (
             <WelcomeSection onExampleClick={handleExampleClick} />
           )}

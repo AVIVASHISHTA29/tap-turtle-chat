@@ -21,20 +21,20 @@ export function ChatInput({
   onExampleClick,
 }: ChatInputProps) {
   return (
-    <div className="p-4 border-t">
+    <div className="p-2 md:p-4 border-t">
       <form onSubmit={onSubmit} className="flex gap-2">
         <Input
           value={input}
           onChange={(e) => onInputChange(e.target.value)}
-          placeholder="Ask about your analytics data..."
-          className="flex-1"
+          placeholder="Ask about your analytics..."
+          className="flex-1 text-sm md:text-base"
         />
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading} size="icon">
           <Send className="h-4 w-4" />
         </Button>
       </form>
       {showSuggestions && (
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-2 flex flex-wrap gap-1 md:gap-2">
           {EXAMPLE_QUERIES.map((example) => (
             <Button
               key={example.label}
