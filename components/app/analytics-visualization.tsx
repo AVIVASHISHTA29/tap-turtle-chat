@@ -1,16 +1,30 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { ChartType } from "@/ai/types";
 import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState } from "react";
 import {
   Area,
   AreaChart,
   Bar,
   BarChart,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   Radar,
   RadarChart,
   ResponsiveContainer,
+  Scatter,
+  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
@@ -18,52 +32,78 @@ import {
 
 interface AnalyticsVisualizationProps {
   type: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any;
+  data: Record<string, any>[];
   title: string;
   insight: string;
+  preferredChart?: ChartType;
 }
 
 export function AnalyticsVisualization({
-  type,
   data,
   title,
   insight,
+  preferredChart,
 }: AnalyticsVisualizationProps) {
-  console.log("Visualization Props:", { type, data, title, insight }); // Debug log
+  const [selectedChart, setSelectedChart] = useState<ChartType>(
+    preferredChart || ChartType.BAR
+  );
 
   const renderChart = () => {
-    // Match the tool names instead of chart types
-    switch (type) {
-      case "getVisitorsTrend":
-        return (
-          <ResponsiveContainer width="100%" height={400}>
+    const chart = (() => {
+      switch (selectedChart) {
+        case ChartType.AREA:
+          return (
             <AreaChart data={data}>
-              <XAxis dataKey="date" />
+              <XAxis
+                dataKey={Object.keys(data[0]).find(
+                  (key) =>
+                    typeof data[0][key] === "string" ||
+                    key.toLowerCase().includes("date")
+                )}
+              />
               <YAxis />
               <Tooltip />
-              <Area
-                type="monotone"
-                dataKey="visitors"
-                stackId="1"
-                stroke="#8884d8"
-                fill="#8884d8"
-              />
-              <Area
-                type="monotone"
-                dataKey="pageviews"
-                stackId="1"
-                stroke="#82ca9d"
-                fill="#82ca9d"
-              />
+              {Object.keys(data[0])
+                .filter((key) => typeof data[0][key] === "number")
+                .map((key, index) => (
+                  <Area
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    stackId={index.toString()}
+                    stroke={`hsl(${index * 60}, 70%, 50%)`}
+                    fill={`hsl(${index * 60}, 70%, 50%)`}
+                  />
+                ))}
             </AreaChart>
-          </ResponsiveContainer>
-        );
+          );
 
-      case "getDeviceDistribution":
-      case "getBrowserAnalytics":
-        return (
-          <ResponsiveContainer width="100%" height={400}>
+        case ChartType.BAR:
+          return (
+            <BarChart data={data}>
+              <XAxis
+                dataKey={Object.keys(data[0]).find(
+                  (key) =>
+                    typeof data[0][key] === "string" ||
+                    key.toLowerCase().includes("date")
+                )}
+              />
+              <YAxis />
+              <Tooltip />
+              {Object.keys(data[0])
+                .filter((key) => typeof data[0][key] === "number")
+                .map((key, index) => (
+                  <Bar
+                    key={key}
+                    dataKey={key}
+                    fill={`hsl(${index * 60}, 70%, 50%)`}
+                  />
+                ))}
+            </BarChart>
+          );
+
+        case ChartType.PIE:
+          return (
             <PieChart>
               <Pie
                 data={data}
@@ -72,20 +112,43 @@ export function AnalyticsVisualization({
                 cx="50%"
                 cy="50%"
                 outerRadius={150}
-                fill="#8884d8"
                 label
+                fill="#8884d8"
               />
               <Tooltip />
             </PieChart>
-          </ResponsiveContainer>
-        );
+          );
 
-      case "getUserEngagement":
-        return (
-          <ResponsiveContainer width="100%" height={400}>
+        case ChartType.LINE:
+          return (
+            <LineChart data={data}>
+              <XAxis
+                dataKey={Object.keys(data[0]).find(
+                  (key) =>
+                    typeof data[0][key] === "string" ||
+                    key.toLowerCase().includes("date")
+                )}
+              />
+              <YAxis />
+              <Tooltip />
+              {Object.keys(data[0])
+                .filter((key) => typeof data[0][key] === "number")
+                .map((key, index) => (
+                  <Line
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    stroke={`hsl(${index * 60}, 70%, 50%)`}
+                  />
+                ))}
+            </LineChart>
+          );
+
+        case ChartType.RADAR:
+          return (
             <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
               <Radar
-                name="Engagement"
+                name="Value"
                 dataKey="value"
                 stroke="#8884d8"
                 fill="#8884d8"
@@ -93,33 +156,58 @@ export function AnalyticsVisualization({
               />
               <Tooltip />
             </RadarChart>
-          </ResponsiveContainer>
-        );
+          );
 
-      case "getPagePerformance":
-        return (
-          <ResponsiveContainer width="100%" height={400}>
+        case ChartType.SCATTER:
+          return (
+            <ScatterChart>
+              <XAxis dataKey="x" />
+              <YAxis dataKey="y" />
+              <Tooltip />
+              <Scatter data={data} fill="#8884d8" />
+            </ScatterChart>
+          );
+
+        default:
+          return (
             <BarChart data={data}>
-              <XAxis dataKey="page" />
+              <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="loadTime" fill="#8884d8" />
-              <Bar dataKey="bounceRate" fill="#82ca9d" />
-              <Bar dataKey="conversion" fill="#ffc658" />
+              <Bar dataKey="value" fill="#8884d8" />
             </BarChart>
-          </ResponsiveContainer>
-        );
+          );
+      }
+    })();
 
-      default:
-        console.log("Unknown chart type:", type); // Debug log
-        return null;
-    }
+    return (
+      <ResponsiveContainer width="100%" height={400}>
+        {chart}
+      </ResponsiveContainer>
+    );
   };
 
   return (
     <Card className="p-6">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold">{title}</h3>
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <Select
+            value={selectedChart}
+            onValueChange={(value) => setSelectedChart(value as ChartType)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select chart type" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.values(ChartType).map((chartType) => (
+                <SelectItem key={chartType} value={chartType}>
+                  {chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <p className="text-sm text-muted-foreground mt-1">{insight}</p>
       </div>
       {renderChart()}

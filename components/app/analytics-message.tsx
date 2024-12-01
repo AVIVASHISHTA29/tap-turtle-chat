@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Card } from "@/components/ui/card";
@@ -36,7 +37,7 @@ export function AnalyticsMessage({ message }: AnalyticsMessageProps) {
               <AnalyticsVisualization
                 key={toolInvocation.toolCallId}
                 type={toolInvocation.toolName}
-                data={result.data}
+                data={result.data as Record<string, any>[]}
                 title={result.title}
                 insight={result.insight}
               />

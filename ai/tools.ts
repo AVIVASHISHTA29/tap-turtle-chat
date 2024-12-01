@@ -1,3 +1,4 @@
+import { AnalyticsTool, ChartType } from "@/ai/types";
 import { tool as createTool } from "ai";
 import { z } from "zod";
 
@@ -57,11 +58,12 @@ export const visitorsTrendTool = createTool({
   }),
   execute: async function ({ days }) {
     return {
-      type: "getVisitorsTrend",
+      type: AnalyticsTool.VISITORS_TREND,
       data: generateTimeSeriesData(days),
       title: `Visitor Trends - Last ${days} Days`,
       insight:
         "Visitor traffic shows a 15% increase compared to the previous period, with peak activity during weekends.",
+      preferredChart: ChartType.AREA,
     };
   },
 });
@@ -72,11 +74,12 @@ export const deviceDistributionTool = createTool({
   execute: async function () {
     const data = generateDeviceData();
     return {
-      type: "getDeviceDistribution",
+      type: AnalyticsTool.DEVICE_DISTRIBUTION,
       data: data.data,
       title: "Device Distribution",
       insight:
         "Mobile usage has increased by 8% this month, suggesting a need to optimize mobile experience.",
+      preferredChart: ChartType.PIE,
     };
   },
 });
@@ -87,11 +90,12 @@ export const browserAnalyticsTool = createTool({
   execute: async function () {
     const data = generateBrowserData();
     return {
-      type: "getBrowserAnalytics",
+      type: AnalyticsTool.BROWSER_ANALYTICS,
       data: data.data,
       title: "Browser Distribution",
       insight:
         "Chrome dominates with 55% share. Consider prioritizing Chrome-specific optimizations.",
+      preferredChart: ChartType.BAR,
     };
   },
 });
@@ -102,11 +106,12 @@ export const userEngagementTool = createTool({
   execute: async function () {
     const data = generateUserEngagementData();
     return {
-      type: "getUserEngagement",
+      type: AnalyticsTool.USER_ENGAGEMENT,
       data: data.data,
       title: "User Engagement Metrics",
       insight:
         "Comments and likes show strong engagement. Consider promoting sharing features more prominently.",
+      preferredChart: ChartType.LINE,
     };
   },
 });
@@ -117,11 +122,12 @@ export const pagePerformanceTool = createTool({
   execute: async function () {
     const data = generatePagePerformanceData();
     return {
-      type: "getPagePerformance",
+      type: AnalyticsTool.PAGE_PERFORMANCE,
       data: data.data,
       title: "Page Performance Metrics",
       insight:
         "The products page has a higher bounce rate. Consider optimizing page load time and content structure.",
+      preferredChart: ChartType.BAR,
     };
   },
 });

@@ -17,13 +17,18 @@ export async function POST(request: Request) {
     - getUserEngagement: For showing engagement metrics across different activities
     - getPagePerformance: For comparing performance metrics across pages
     
-    Always use the appropriate tool when asked about any of these metrics.
-    Provide context before and after showing visualizations.
+    When suggesting visualizations, also recommend appropriate chart types:
+    - Area charts: Good for showing trends over time and cumulative data
+    - Bar charts: Excellent for comparing quantities across categories
+    - Pie charts: Best for showing proportions of a whole
+    - Line charts: Perfect for showing trends and continuous data
+    - Radar charts: Useful for comparing multiple variables
+    - Scatter plots: Great for showing correlations
     
-    Example responses:
-    - "Let me show you the visitor trends... [use getVisitorsTrend]"
-    - "Here's the breakdown of devices... [use getDeviceDistribution]"
-    - "Let me analyze the engagement metrics... [use getUserEngagement]"`,
+    Ask users about their preferred chart type when relevant.
+    Example: "Would you like to see this data as a bar chart or pie chart?"
+    
+    Always provide context and insights with visualizations.`,
     messages,
     maxSteps: 5,
     tools,
