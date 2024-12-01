@@ -3,8 +3,10 @@
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useChat } from "ai/react";
+import { useEffect, useRef } from "react";
 import { AnalyticsMessage } from "./analytics-message";
 import { ChatInput } from "./chat-input";
+import { LoadingMessage } from "./loading-message";
 import { WelcomeSection } from "./welcome-section";
 
 export function ChatInterface() {
@@ -12,16 +14,22 @@ export function ChatInterface() {
     api: "/api/chat",
   });
 
-  const handleExampleClick = (query: string) => {
-    setInput(query);
-    const form = document.createElement("form");
-    const submitEvent = new Event("submit", {
-      bubbles: true,
-      cancelable: true,
-    });
+  const pendingSubmission = useRef<string | null>(null);
 
-    form.dispatchEvent(submitEvent);
-    handleSubmit(submitEvent as unknown as React.FormEvent);
+  useEffect(() => {
+    if (pendingSubmission.current === input) {
+      const submitEvent = new Event("submit", {
+        bubbles: true,
+        cancelable: true,
+      });
+      handleSubmit(submitEvent as unknown as React.FormEvent);
+      pendingSubmission.current = null;
+    }
+  }, [input, handleSubmit]);
+
+  const handleExampleClick = (query: string) => {
+    pendingSubmission.current = query;
+    setInput(query);
   };
 
   return (
@@ -34,6 +42,7 @@ export function ChatInterface() {
           {messages.map((message) => (
             <AnalyticsMessage key={message.id} message={message} />
           ))}
+          {isLoading && <LoadingMessage />}
         </ScrollArea>
 
         <ChatInput

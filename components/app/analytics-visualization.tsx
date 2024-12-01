@@ -42,6 +42,30 @@ interface AnalyticsVisualizationProps {
   preferredChart?: ChartType;
 }
 
+const getChartColors = (isDark = false) => ({
+  primary: isDark ? "hsl(var(--primary))" : "hsl(var(--primary))",
+  muted: isDark ? "hsl(var(--muted))" : "hsl(var(--muted))",
+  background: isDark ? "hsl(var(--background))" : "hsl(var(--background))",
+  foreground: isDark ? "hsl(var(--foreground))" : "hsl(var(--foreground))",
+  accent: "hsl(var(--accent))",
+  secondary: "hsl(var(--secondary))",
+  border: "hsl(var(--border))",
+});
+
+const generateColorPalette = (length: number) => {
+  const colors = [
+    "hsl(var(--primary))",
+    "hsl(var(--accent))",
+    "hsl(var(--secondary))",
+    "hsl(217 91% 60%)", // blue
+    "hsl(292 91% 73%)", // pink
+    "hsl(144 61% 60%)", // green
+    "hsl(31 91% 65%)", // orange
+  ];
+
+  return Array.from({ length }, (_, i) => colors[i % colors.length]);
+};
+
 export function AnalyticsVisualization({
   data,
   title,
@@ -51,6 +75,9 @@ export function AnalyticsVisualization({
   const [selectedChart, setSelectedChart] = useState<ChartType>(
     preferredChart || ChartType.BAR
   );
+
+  const chartColors = getChartColors();
+  const colorPalette = generateColorPalette(10);
 
   // Transform data for pie/radar charts if needed
   const transformedData = useMemo(() => {
@@ -103,9 +130,20 @@ export function AnalyticsVisualization({
                     typeof data[0][key] === "string" ||
                     key.toLowerCase().includes("date")
                 )}
+                stroke={chartColors.foreground}
+                tick={{ fill: chartColors.foreground }}
               />
-              <YAxis />
-              <Tooltip />
+              <YAxis
+                stroke={chartColors.foreground}
+                tick={{ fill: chartColors.foreground }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: chartColors.background,
+                  borderColor: chartColors.border,
+                  color: chartColors.foreground,
+                }}
+              />
               {Object.keys(data[0])
                 .filter((key) => typeof data[0][key] === "number")
                 .map((key, index) => (
@@ -114,8 +152,9 @@ export function AnalyticsVisualization({
                     type="monotone"
                     dataKey={key}
                     stackId={index.toString()}
-                    stroke={`hsl(${index * 60}, 70%, 50%)`}
-                    fill={`hsl(${index * 60}, 70%, 50%)`}
+                    stroke={colorPalette[index]}
+                    fill={colorPalette[index]}
+                    fillOpacity={0.4}
                   />
                 ))}
             </AreaChart>
@@ -130,16 +169,28 @@ export function AnalyticsVisualization({
                     typeof data[0][key] === "string" ||
                     key.toLowerCase().includes("date")
                 )}
+                stroke={chartColors.foreground}
+                tick={{ fill: chartColors.foreground }}
               />
-              <YAxis />
-              <Tooltip />
+              <YAxis
+                stroke={chartColors.foreground}
+                tick={{ fill: chartColors.foreground }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: chartColors.background,
+                  borderColor: chartColors.border,
+                  color: chartColors.foreground,
+                }}
+              />
               {Object.keys(data[0])
                 .filter((key) => typeof data[0][key] === "number")
                 .map((key, index) => (
                   <Bar
                     key={key}
                     dataKey={key}
-                    fill={`hsl(${index * 60}, 70%, 50%)`}
+                    fill={colorPalette[index]}
+                    fillOpacity={0.9}
                   />
                 ))}
             </BarChart>
@@ -156,18 +207,21 @@ export function AnalyticsVisualization({
                 cy="50%"
                 outerRadius={150}
                 label
-                fill="#8884d8"
               >
                 {transformedData.map((_, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={`hsl(${
-                      index * (360 / transformedData.length)
-                    }, 70%, 50%)`}
+                    fill={colorPalette[index % colorPalette.length]}
                   />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: chartColors.background,
+                  borderColor: chartColors.border,
+                  color: chartColors.foreground,
+                }}
+              />
             </PieChart>
           );
 
@@ -255,10 +309,10 @@ export function AnalyticsVisualization({
   };
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 bg-card">
       <div className="mb-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">{title}</h3>
+          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
           <Select
             value={selectedChart}
             onValueChange={(value) => setSelectedChart(value as ChartType)}
@@ -277,7 +331,7 @@ export function AnalyticsVisualization({
         </div>
         <p className="text-sm text-muted-foreground mt-1">{insight}</p>
       </div>
-      {renderChart()}
+      <div className="w-full h-[400px]">{renderChart()}</div>
     </Card>
   );
 }
