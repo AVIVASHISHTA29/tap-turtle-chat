@@ -10,16 +10,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
   Bar,
   BarChart,
+  Cell,
   Line,
   LineChart,
   Pie,
   PieChart,
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
   Radar,
   RadarChart,
   ResponsiveContainer,
@@ -47,6 +51,45 @@ export function AnalyticsVisualization({
   const [selectedChart, setSelectedChart] = useState<ChartType>(
     preferredChart || ChartType.BAR
   );
+
+  // Transform data for pie/radar charts if needed
+  const transformedData = useMemo(() => {
+    if (
+      (selectedChart === ChartType.PIE || selectedChart === ChartType.RADAR) &&
+      data[0] &&
+      !data[0].hasOwnProperty("name")
+    ) {
+      // Get all numeric keys
+      const numericKeys = Object.keys(data[0]).filter(
+        (key) => typeof data[0][key] === "number"
+      );
+
+      // Use the latest data point for the pie chart
+      const latestData = data[0];
+      return numericKeys.map((key) => ({
+        name: key,
+        value: latestData[key],
+      }));
+    }
+    return data;
+  }, [data, selectedChart]);
+
+  // Transform data for scatter plot
+  const scatterData = useMemo(() => {
+    if (selectedChart === ChartType.SCATTER && data[0]) {
+      const numericKeys = Object.keys(data[0]).filter(
+        (key) => typeof data[0][key] === "number"
+      );
+      if (numericKeys.length >= 2) {
+        return data.map((item) => ({
+          x: item[numericKeys[0]],
+          y: item[numericKeys[1]],
+          name: item.date || item.name || item.metric || item.page,
+        }));
+      }
+    }
+    return data;
+  }, [data, selectedChart]);
 
   const renderChart = () => {
     const chart = (() => {
@@ -106,7 +149,7 @@ export function AnalyticsVisualization({
           return (
             <PieChart>
               <Pie
-                data={data}
+                data={transformedData}
                 dataKey="value"
                 nameKey="name"
                 cx="50%"
@@ -114,7 +157,16 @@ export function AnalyticsVisualization({
                 outerRadius={150}
                 label
                 fill="#8884d8"
-              />
+              >
+                {transformedData.map((_, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={`hsl(${
+                      index * (360 / transformedData.length)
+                    }, 70%, 50%)`}
+                  />
+                ))}
+              </Pie>
               <Tooltip />
             </PieChart>
           );
@@ -146,9 +198,19 @@ export function AnalyticsVisualization({
 
         case ChartType.RADAR:
           return (
-            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
+            <RadarChart
+              cx="50%"
+              cy="50%"
+              outerRadius="80%"
+              data={transformedData}
+            >
+              {transformedData.map((_, index) => (
+                <PolarGrid key={`grid-${index}`} />
+              ))}
+              <PolarAngleAxis dataKey="name" />
+              <PolarRadiusAxis />
               <Radar
-                name="Value"
+                name="Values"
                 dataKey="value"
                 stroke="#8884d8"
                 fill="#8884d8"
@@ -161,10 +223,15 @@ export function AnalyticsVisualization({
         case ChartType.SCATTER:
           return (
             <ScatterChart>
-              <XAxis dataKey="x" />
-              <YAxis dataKey="y" />
-              <Tooltip />
-              <Scatter data={data} fill="#8884d8" />
+              <XAxis type="number" dataKey="x" name="x" />
+              <YAxis type="number" dataKey="y" name="y" />
+              <Tooltip cursor={{ strokeDasharray: "3 3" }} />
+              <Scatter
+                data={scatterData}
+                fill="#8884d8"
+                name="Values"
+                line={{ stroke: "#8884d8" }}
+              />
             </ScatterChart>
           );
 
