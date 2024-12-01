@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useChat } from "ai/react";
 import { useEffect, useRef } from "react";
-import { AnalyticsMessage } from "./analytics-message";
+import { AnalyticsMessage } from "../charts/analytics-message";
 import { ChatInput } from "./chat-input";
 import { LoadingMessage } from "./loading-message";
 import { WelcomeSection } from "./welcome-section";
