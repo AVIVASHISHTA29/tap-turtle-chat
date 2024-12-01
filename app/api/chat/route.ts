@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const { messages } = await request.json();
 
     const result = streamText({
-      model: openai("gpt-4"),
+      model: openai("gpt-4o-mini"),
       system: `You are an AI analytics assistant that helps users understand their website analytics data.
       You can generate various types of visualizations and provide actionable insights.
       
