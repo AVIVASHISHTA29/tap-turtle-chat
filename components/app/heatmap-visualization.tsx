@@ -1,5 +1,7 @@
 "use client";
 
+import * as d3 from "d3";
+import { GeoPermissibleObjects } from "d3-geo";
 import { useEffect, useRef } from "react";
 
 interface HeatmapPoint {
@@ -21,49 +23,6 @@ export function HeatmapVisualization({
 }: HeatmapVisualizationProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Helper function to get color based on intensity
-  const getIntensityColor = (value: number) => {
-    // Define color stops
-    const colors = [
-      { stop: 0.2, color: [0, 255, 0] }, // Green for low intensity
-      { stop: 0.4, color: [255, 255, 0] }, // Yellow for medium-low
-      { stop: 0.6, color: [255, 165, 0] }, // Orange for medium
-      { stop: 0.8, color: [255, 69, 0] }, // Red-Orange for medium-high
-      { stop: 1.0, color: [255, 0, 0] }, // Red for high intensity
-    ];
-
-    // Find appropriate color range
-    let startColor, endColor, startStop, endStop;
-    for (let i = 0; i < colors.length; i++) {
-      if (value <= colors[i].stop) {
-        if (i === 0) {
-          return `rgba(${colors[0].color.join(",")}, ${value * 0.8})`;
-        }
-        startColor = colors[i - 1].color;
-        endColor = colors[i].color;
-        startStop = colors[i - 1].stop;
-        endStop = colors[i].stop;
-        break;
-      }
-    }
-
-    if (!startColor || !endColor) {
-      return `rgba(255, 0, 0, ${value * 0.8})`;
-    }
-
-    if (startStop === undefined || endStop === undefined) {
-      return `rgba(255, 0, 0, ${value * 0.8})`;
-    }
-
-    // Interpolate between colors
-    const ratio = (value - startStop) / (endStop - startStop);
-    const r = Math.floor(startColor[0] + (endColor[0] - startColor[0]) * ratio);
-    const g = Math.floor(startColor[1] + (endColor[1] - startColor[1]) * ratio);
-    const b = Math.floor(startColor[2] + (endColor[2] - startColor[2]) * ratio);
-
-    return `rgba(${r}, ${g}, ${b}, ${value * 0.8})`;
-  };
-
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -74,7 +33,7 @@ export function HeatmapVisualization({
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.src =
-      "https://static.wixstatic.com/media/72c0b2_b3cae0ab282b4c80b826d6cd1870192f~mv2.jpg/v1/fill/w_924,h_437,al_c,q_85,enc_auto/72c0b2_b3cae0ab282b4c80b826d6cd1870192f~mv2.jpg";
+      "https://i.ibb.co/R3V4Whb/Screenshot-2024-12-01-at-12-46-59-PM.png";
 
     img.onload = () => {
       // Calculate scaling factors
@@ -95,6 +54,24 @@ export function HeatmapVisualization({
       // Draw image
       ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
 
+      // Create density data
+      const densityData = d3
+        .contourDensity<HeatmapPoint>()
+        .x((d) => (d.x / 100) * drawWidth + offsetX)
+        .y((d) => (d.y / 100) * drawHeight + offsetY)
+        .weight((d) => d.value)
+        .size([width, height])
+        .bandwidth(30)
+        .thresholds(30)(data);
+
+      // Updated color scale to use orange-to-red gradient
+      const colorScale = d3.scaleSequential().domain([0, 1]).interpolator(
+        d3.interpolateRgb.gamma(0.8)(
+          "rgba(255, 165, 0, 0.2)", // Light orange with low opacity
+          "rgba(255, 0, 0, 0.8)" // Bright red with high opacity
+        )
+      );
+
       // Create offscreen canvas for heatmap
       const offscreen = document.createElement("canvas");
       offscreen.width = width;
@@ -102,40 +79,28 @@ export function HeatmapVisualization({
       const offCtx = offscreen.getContext("2d");
       if (!offCtx) return;
 
-      // Draw heatmap points
-      data.forEach((point) => {
-        // Scale coordinates to match image
-        const scaledX = (point.x / 100) * drawWidth + offsetX;
-        const scaledY = (point.y / 100) * drawHeight + offsetY;
+      // Draw density contours
+      const geoPath = d3.geoPath().context(offCtx);
 
-        const radius = Math.max(drawWidth, drawHeight) * 0.1; // Relative radius
-        const gradient = offCtx.createRadialGradient(
-          scaledX,
-          scaledY,
-          0,
-          scaledX,
-          scaledY,
-          radius
-        );
-
-        const color = getIntensityColor(point.value);
-        gradient.addColorStop(0, color);
-        gradient.addColorStop(0.5, color.replace("0.8)", "0.4)"));
-        gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
-
-        offCtx.fillStyle = gradient;
+      densityData.forEach((density) => {
         offCtx.beginPath();
-        offCtx.arc(scaledX, scaledY, radius, 0, Math.PI * 2);
+        geoPath(density as GeoPermissibleObjects);
+        offCtx.fillStyle = colorScale(density.value);
         offCtx.fill();
       });
 
-      // Overlay heatmap with blend mode
-      ctx.globalCompositeOperation = "overlay";
+      // Increased blur for smoother appearance
+      offCtx.filter = "blur(15px)";
+      offCtx.drawImage(offscreen, 0, 0);
+      offCtx.filter = "none";
+
+      // Changed blend mode for better color visibility
+      ctx.globalCompositeOperation = "multiply";
       ctx.drawImage(offscreen, 0, 0);
       ctx.globalCompositeOperation = "source-over";
 
-      // Add subtle overlay for better visibility
-      ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+      // Adjusted overlay for better contrast
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
       ctx.fillRect(0, 0, width, height);
     };
   }, [data, width, height]);

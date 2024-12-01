@@ -51,39 +51,47 @@ const generatePagePerformanceData = () => ({
   ],
 });
 
-const generateHeatmapData = () => ({
-  data: [
-    { x: 10, y: 5, value: 0.3 },
-    { x: 20, y: 5, value: 0.4 },
-    { x: 30, y: 5, value: 0.5 },
+const generateHeatmapData = () => {
+  // Generate base points for key areas
+  const keyAreas = [
+    { x: 50, y: 30, value: 0.9 }, // Hero CTA
+    { x: 85, y: 45, value: 0.7 }, // Sidebar
+    { x: 50, y: 60, value: 0.8 }, // Main content
+    { x: 0, y: 0, value: 1 }, // Top left corner
+    { x: 100, y: 0, value: 1 }, // Top right corner
+    { x: 0, y: 100, value: 1 }, // Bottom left corner
+    { x: 100, y: 100, value: 1 }, // Bottom right corner
+  ];
 
-    { x: 50, y: 30, value: 1 },
-    { x: 45, y: 25, value: 1 },
-    { x: 55, y: 25, value: 1 },
+  // Generate additional points around key areas
+  const data = keyAreas.flatMap((area) => {
+    const points = [];
+    // Add the key point
+    points.push(area);
 
-    { x: 30, y: 50, value: 0.5 },
-    { x: 50, y: 50, value: 0.8 },
-    { x: 70, y: 50, value: 0.4 },
+    // Add surrounding points with varying intensities
+    for (let i = 0; i < 15; i++) {
+      const radius = Math.random() * 15;
+      const angle = Math.random() * Math.PI * 2;
+      const x = Math.max(0, Math.min(100, area.x + Math.cos(angle) * radius));
+      const y = Math.max(0, Math.min(100, area.y + Math.sin(angle) * radius));
+      const value = area.value * (1 - radius / 20); // Decrease intensity with distance
+      points.push({ x, y, value });
+    }
+    return points;
+  });
 
-    { x: 85, y: 40, value: 1 },
-    { x: 85, y: 50, value: 1 },
-    { x: 85, y: 60, value: 1 },
+  // Add some random background noise
+  for (let i = 0; i < 50; i++) {
+    data.push({
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      value: Math.random() * 0.3,
+    });
+  }
 
-    { x: 0, y: 0, value: 10 },
-    { x: 0, y: 0, value: 10 },
-    { x: 0, y: 0, value: 10 },
-
-    { x: 20, y: 90, value: 0.3 },
-    { x: 40, y: 90, value: 0.2 },
-    { x: 60, y: 90, value: 0.3 },
-    { x: 80, y: 90, value: 0.2 },
-
-    { x: 40, y: 70, value: 0.6 },
-    { x: 60, y: 70, value: 0.5 },
-    { x: 30, y: 40, value: 0.4 },
-    { x: 70, y: 40, value: 0.3 },
-  ],
-});
+  return { data };
+};
 
 export const visitorsTrendTool = createTool({
   description: "Get visitor trends over time with multiple metrics",
