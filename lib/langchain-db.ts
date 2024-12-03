@@ -30,8 +30,14 @@ class ClickhouseDatabase {
 
   async run(query: string) {
     try {
+      // Clean the query by removing markdown formatting and unnecessary whitespace
+      const cleanQuery = query
+        .replace(/```sql\n?/g, "")
+        .replace(/```\n?/g, "")
+        .trim();
+
       const result = await clickhouse.query({
-        query,
+        query: cleanQuery,
         format: "JSONEachRow",
       });
       return await result.json();
@@ -65,6 +71,8 @@ export const initLangChainDB = async () => {
     Write a SQL query that answers this question. Use only the tables and columns shown in the schema.
     If the question cannot be answered with the available schema, respond with "Cannot answer this question with the available data."
     
+    IMPORTANT: Write the SQL query directly without any markdown formatting or code blocks.
+    
     SQL QUERY:
   `);
 
@@ -75,7 +83,7 @@ export const initLangChainDB = async () => {
       question: (input: { question: string }) => input.question,
     },
     sqlPrompt,
-    llm.bind({ stop: ["\nSQLResult:"] }),
+    llm.bind({ stop: ["\nSQLResult:", "```"] }),
     new StringOutputParser(),
   ]);
 
