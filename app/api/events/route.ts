@@ -1,17 +1,17 @@
+import { EventType, ScrollDirection } from "@/enums";
 import clickhouse from "@/lib/clickhouse";
-import { EventType } from "@/types/eventTypes";
 import { NextRequest, NextResponse } from "next/server";
 import * as pako from "pako";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
 const eventTypeEnum = z.enum([
-  "click",
-  "scroll",
-  "mousemove",
-  "dom_load",
-  "dom_unload",
-]) as z.ZodType<EventType>;
+  EventType.CLICK,
+  EventType.MOUSE_MOVE,
+  EventType.SCROLL,
+  EventType.DOM_LOAD,
+  EventType.DOM_UNLOAD,
+]);
 
 const eventDataSchema = z.object({
   event_type: eventTypeEnum,
@@ -20,7 +20,17 @@ const eventDataSchema = z.object({
   x_position: z.number().nullable(),
   y_position: z.number().nullable(),
   timestamp: z.string(),
-  metadata: z.any().optional(),
+  metadata: z
+    .object({
+      referrer: z.string().nullable().optional(),
+      user_agent: z.string().nullable().optional(),
+      text_content: z.string().nullable().optional(),
+      html_content: z.string().nullable().optional(),
+      scroll_percentage: z.number().int().optional(),
+      direction: z.enum([ScrollDirection.UP, ScrollDirection.DOWN]).optional(),
+    })
+    .optional()
+    .nullable(),
 });
 
 const payloadSchema = z.object({
@@ -35,16 +45,14 @@ const payloadSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    // Read the compressed data from the request body
+    // Read and decompress request data
     const compressedData = await req.arrayBuffer();
-
-    // Decompress the data
     const decompressedData = pako.inflate(new Uint8Array(compressedData), {
       to: "string",
     });
     const jsonData = JSON.parse(decompressedData);
 
-    // Validate the payload using Zod
+    // Validate the payload
     const payload = payloadSchema.parse(jsonData);
 
     const {
@@ -57,11 +65,11 @@ export async function POST(req: NextRequest) {
       viewport_height,
     } = payload;
 
+    // Validate API Key
     const projectQuery = await clickhouse.query({
       query: `SELECT project_id FROM projects WHERE api_key = '${api_key}'`,
       format: "JSONEachRow",
     });
-
     const results = await projectQuery.json();
     const rows = results as Array<{ project_id: string }>;
 
@@ -71,24 +79,29 @@ export async function POST(req: NextRequest) {
 
     const project_id = rows[0].project_id;
 
-    // Insert or update the session - Fix the insert format
+    // Insert or update the session
     await clickhouse.insert({
       table: "sessions",
       values: [
         {
-          // Wrap the values in an array
           session_id: session_id,
           project_id: project_id,
           timestamp_start: timestamp,
           page_url: page_url,
           viewport_width: viewport_width,
           viewport_height: viewport_height,
+          referrer:
+            payload.events.find((e) => e.event_type === "dom_load")?.metadata
+              ?.referrer || null,
+          user_agent:
+            payload.events.find((e) => e.event_type === "dom_load")?.metadata
+              ?.user_agent || null,
         },
       ],
-      format: "JSONEachRow", // Specify the format
+      format: "JSONEachRow",
     });
 
-    // Prepare all events in a single batch
+    // Prepare all events for batch insertion
     const eventValues = events.map((event) => ({
       event_id: uuidv4(),
       session_id: session_id,
@@ -99,10 +112,18 @@ export async function POST(req: NextRequest) {
       css_selector: event.css_selector,
       x_position: event.x_position,
       y_position: event.y_position,
-      metadata: event.metadata ? JSON.stringify(event.metadata) : null,
+      text_content: event.metadata?.text_content || null,
+      html_content: event.metadata?.html_content || null,
+      scroll_percentage: event.metadata?.scroll_percentage || null,
+      scroll_direction:
+        event.metadata?.direction === ScrollDirection.UP
+          ? 1
+          : event.metadata?.direction === ScrollDirection.DOWN
+          ? 2
+          : null,
     }));
 
-    // Insert all events in a single batch operation
+    // Insert all events
     await clickhouse.insert({
       table: "events",
       values: eventValues,
@@ -111,7 +132,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ status: "success" });
   } catch (error) {
-    // Add better error logging
     if (error instanceof z.ZodError) {
       console.error("Validation Error:", error.errors);
       return NextResponse.json(
