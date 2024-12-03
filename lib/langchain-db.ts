@@ -76,28 +76,58 @@ class ClickhouseDatabase {
 export const initLangChainDB = async () => {
   const db = new ClickhouseDatabase();
   const llm = new ChatOpenAI({
-    modelName: "gpt-4o-mini",
+    modelName: "gpt-4",
     temperature: 0,
   });
 
   const sqlPrompt = PromptTemplate.fromTemplate(`
-    Based on the provided SQL table schema below, write a SQL query that would answer the user's question.
-    If the user is asking for a visualization or chart of previous results, do not write a new query - instead respond with "USE_PREVIOUS_RESULTS".
-    Use ClickHouse SQL syntax. The database contains analytics data about website visitors and their interactions.
+    You are an analytics expert. Based on the user's question, write SQL queries that provide comprehensive analytics.
+    Always try to get numerical data that can be visualized.
     
     Available tables and their schemas:
-    
     {schema}
     
     User Question: {question}
     
-    Write a SQL query that answers this question. Use only the tables and columns shown in the schema.
-    If the question cannot be answered with the available schema, respond with "Cannot answer this question with the available data."
-    If the user is asking for a visualization of previous results, respond with "USE_PREVIOUS_RESULTS"
+    Guidelines:
+    1. If the user asks about trends, include time-based grouping
+    2. For comparisons, include counts and percentages
+    3. When analyzing events, consider grouping by type, page, or time
+    4. Always include relevant metrics that could be visualized
+    5. If the user asks about previous results, respond with "USE_PREVIOUS_RESULTS"
     
-    IMPORTANT: Write the SQL query directly without any markdown formatting or code blocks.
+    Write a SQL query that provides detailed analytics. Use ClickHouse SQL syntax.
     
     SQL QUERY:
+  `);
+
+  const responsePrompt = PromptTemplate.fromTemplate(`
+    You are an analytics expert who always provides insights with visualizations.
+    
+    Schema: {schema}
+    Question: {question}
+    SQL Query: {query}
+    Results: {response}
+    Previous Context: {lastContext}
+    
+    Instructions:
+    1. ALWAYS analyze the numerical data and provide specific statistics
+    2. ALWAYS create at least one visualization using the appropriate tool
+    3. Format the data according to the visualization schema that best fits the data
+    4. If the data shows trends, use getVisitorsTrend or getUserEngagement
+    5. If the data shows distribution, use getDeviceDistribution or getBrowserAnalytics
+    6. If the data is about pages, use getPagePerformance
+    7. If the data involves click positions, use getPageHeatmap
+    8. Add insights about what the data and visualization reveal
+    
+    Format your response as:
+    1. Key Statistics: (list the important numbers)
+    2. Visualization: (include the formatted data for the visualization)
+    3. Insights: (explain what the data suggests)
+    
+    Remember: ALWAYS include a visualization - transform the data to fit the appropriate visualization schema.
+    
+    Response:
   `);
 
   const sqlQueryChain = RunnableSequence.from([
@@ -109,29 +139,6 @@ export const initLangChainDB = async () => {
     llm.bind({ stop: ["\nSQLResult:", "```"] }),
     new StringOutputParser(),
   ]);
-
-  const responsePrompt = PromptTemplate.fromTemplate(`
-    You are an analytics assistant. Based on the following information, provide a clear and concise response:
-    
-    Schema of available data:
-    {schema}
-    
-    Original Question: {question}
-    
-    SQL Query Used: {query}
-    
-    Query Results: {response}
-    
-    Previous Context: The last query was about {lastContext}
-    
-    Provide a natural language response that:
-    1. Answers the user's question directly
-    2. Includes relevant numbers and statistics from the query results
-    3. Adds brief insights about what the data suggests
-    4. If the user asks for a visualization, format the data according to the appropriate visualization schema
-    
-    Response:
-  `);
 
   const finalChain = RunnableSequence.from([
     {

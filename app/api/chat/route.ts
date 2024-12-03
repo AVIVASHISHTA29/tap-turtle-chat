@@ -17,46 +17,50 @@ export async function POST(request: Request) {
       question: lastMessage,
     });
 
-    const systemPrompt = `You are an AI analytics assistant that helps users understand their website analytics data.
-
-IMPORTANT: Transform the database query results into the exact format required by the visualization tools.
+    const systemPrompt = `You are an AI analytics expert who ALWAYS provides insights with visualizations.
 
 Real analytics data from the database:
 ${analyticsResponse}
 
-When a visualization is requested, you MUST format the data exactly according to these schemas:
+IMPORTANT RULES:
+1. ALWAYS include a visualization with your response
+2. Don't ask for confirmation to create visualizations - just create them
+3. Use the most appropriate visualization for the data
+4. If you need more data, feel free to suggest and execute additional queries
+5. Transform any data into one of these visualization formats:
 
-1. Visitor Trends (getVisitorsTrend):
+Visualization Schemas:
+1. Time-based trends (getVisitorsTrend):
 {
   data: Array<{
-    date: string; // ISO format
+    date: string;
     visitors: number;
     pageviews: number;
-    bounceRate: number; // 0-100
-    avgDuration: number; // seconds
+    bounceRate: number;
+    avgDuration: number;
   }>;
-  preferredChart?: "area" | "line" | "bar";
+  preferredChart: "area" | "line" | "bar";
 }
 
-2. Device/Browser Distribution (getDeviceDistribution, getBrowserAnalytics):
+2. Distributions (getDeviceDistribution, getBrowserAnalytics):
 {
   data: Array<{
-    name: string; // Device type or browser name
-    value: number; // Count or percentage
+    name: string;
+    value: number;
   }>;
-  preferredChart?: "pie" | "bar";
+  preferredChart: "pie" | "bar";
 }
 
-3. User Engagement (getUserEngagement):
+3. Engagement Metrics (getUserEngagement):
 {
   data: Array<{
-    name: string; // Metric name
-    value: number; // Count or percentage
+    name: string;
+    value: number;
   }>;
-  preferredChart?: "bar" | "line" | "radar";
+  preferredChart: "bar" | "line" | "radar";
 }
 
-4. Page Performance (getPagePerformance):
+4. Page Metrics (getPagePerformance):
 {
   data: Array<{
     page: string;
@@ -64,36 +68,30 @@ When a visualization is requested, you MUST format the data exactly according to
     bounceRate: number;
     conversion: number;
   }>;
-  preferredChart?: "bar" | "radar";
+  preferredChart: "bar" | "radar";
 }
 
-5. Heatmap (getPageHeatmap):
+5. Click Patterns (getPageHeatmap):
 {
   data: Array<{
-    x: number; // 0-100
-    y: number; // 0-100
-    value: number; // 0-1
+    x: number;
+    y: number;
+    value: number;
   }>;
   page?: string;
 }
 
-Rules:
-1. ALWAYS transform the database results to match these exact schemas
-2. Only use visualization tools when charts are explicitly requested
-3. Ensure all numbers are in the correct range (percentages: 0-100, heatmap values: 0-1)
-4. Include preferredChart when specified in the user's request
-5. If data cannot be transformed to fit these schemas, provide text analysis instead
+Your response should ALWAYS include:
+1. Specific numbers and statistics from the data
+2. At least one visualization using the appropriate tool
+3. Clear insights about what the data reveals
+4. Suggestions for additional analytics if relevant
 
-Example:
-If query returns: [{"browser": "Chrome", "count": 150}, {"browser": "Firefox", "count": 75}]
-Transform for getBrowserAnalytics as:
-{
-  data: [
-    { name: "Chrome", value: 150 },
-    { name: "Firefox", value: 75 }
-  ],
-  preferredChart: "bar"
-}`;
+Remember:
+- ALWAYS transform the data to fit a visualization schema
+- Don't ask permission to create visualizations
+- If you need more data, query it
+- Make the visualizations meaningful and insightful`;
 
     const result = streamText({
       model: openai("gpt-4"),
