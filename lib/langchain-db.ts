@@ -4,6 +4,7 @@ import { StringOutputParser } from "@langchain/core/output_parsers";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { ChatOpenAI } from "@langchain/openai";
+import { retrieveSimilarContexts, storeQueryContext } from "./pinecone-client";
 
 interface QueryContext {
   lastQuery?: string;
@@ -36,12 +37,10 @@ class ClickhouseDatabase {
 
   async run(query: string) {
     try {
-      // If the input is not a SQL query, return the last results
       if (!query.trim().toUpperCase().startsWith("SELECT")) {
         return this.queryContext.lastResults || [];
       }
 
-      // Clean the query by removing markdown formatting and unnecessary whitespace
       const cleanQuery = query
         .replace(/```sql\n?/g, "")
         .replace(/```\n?/g, "")
@@ -54,7 +53,6 @@ class ClickhouseDatabase {
 
       const results = await result.json();
 
-      // Store the context
       this.queryContext = {
         lastQuery: cleanQuery,
         lastResults: results,
@@ -63,7 +61,6 @@ class ClickhouseDatabase {
       return results;
     } catch (error) {
       console.error("Query execution error:", error);
-      // Return last results if query fails
       return this.queryContext.lastResults || [];
     }
   }
@@ -81,7 +78,7 @@ export const initLangChainDB = async () => {
   });
 
   const sqlPrompt = PromptTemplate.fromTemplate(`
-    You are an analytics expert. Based on the user's question, write SQL queries that provide comprehensive analytics.
+    You are an analytics expert. Based on the user's question and previous context, write SQL queries that provide comprehensive analytics.
     Always try to get numerical data that can be visualized.
     
     Available tables and their schemas:
@@ -89,12 +86,16 @@ export const initLangChainDB = async () => {
     
     User Question: {question}
     
+    Previous Similar Queries and Results:
+    {previousContext}
+    
     Guidelines:
     1. If the user asks about trends, include time-based grouping
     2. For comparisons, include counts and percentages
     3. When analyzing events, consider grouping by type, page, or time
     4. Always include relevant metrics that could be visualized
     5. If the user asks about previous results, respond with "USE_PREVIOUS_RESULTS"
+    6. Use the previous context to improve your query and avoid redundant queries
     
     Write a SQL query that provides detailed analytics. Use ClickHouse SQL syntax.
     
@@ -108,7 +109,7 @@ export const initLangChainDB = async () => {
     Question: {question}
     SQL Query: {query}
     Results: {response}
-    Previous Context: {lastContext}
+    Previous Context: {previousContext}
     
     Instructions:
     1. ALWAYS analyze the numerical data and provide specific statistics
@@ -119,11 +120,12 @@ export const initLangChainDB = async () => {
     6. If the data is about pages, use getPagePerformance
     7. If the data involves click positions, use getPageHeatmap
     8. Add insights about what the data and visualization reveal
+    9. Reference previous similar queries to provide context and comparisons
     
     Format your response as:
     1. Key Statistics: (list the important numbers)
     2. Visualization: (include the formatted data for the visualization)
-    3. Insights: (explain what the data suggests)
+    3. Insights: (explain what the data suggests, including historical context)
     
     Remember: ALWAYS include a visualization - transform the data to fit the appropriate visualization schema.
     
@@ -134,6 +136,10 @@ export const initLangChainDB = async () => {
     {
       schema: async () => db.getTableInfo(),
       question: (input: { question: string }) => input.question,
+      previousContext: async (input: { question: string }) => {
+        const similarContexts = await retrieveSimilarContexts(input.question);
+        return JSON.stringify(similarContexts, null, 2);
+      },
     },
     sqlPrompt,
     llm.bind({ stop: ["\nSQLResult:", "```"] }),
@@ -152,10 +158,15 @@ export const initLangChainDB = async () => {
         input.query === "USE_PREVIOUS_RESULTS"
           ? db.getLastContext().lastQuery
           : input.query,
-      response: async (input) => db.run(input.query),
-      lastContext: async () => {
-        const context = db.getLastContext();
-        return context.lastQuery || "No previous query";
+      response: async (input) => {
+        const results = await db.run(input.query);
+        // Store the context in Pinecone
+        await storeQueryContext(input.question, input.query, results);
+        return results;
+      },
+      previousContext: async (input) => {
+        const similarContexts = await retrieveSimilarContexts(input.question);
+        return JSON.stringify(similarContexts, null, 2);
       },
     },
     responsePrompt,
