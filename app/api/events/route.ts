@@ -79,27 +79,41 @@ export async function POST(req: NextRequest) {
 
     const project_id = rows[0].project_id;
 
-    // Insert or update the session
-    await clickhouse.insert({
-      table: "sessions",
-      values: [
-        {
-          session_id: session_id,
-          project_id: project_id,
-          timestamp_start: timestamp,
-          page_url: page_url,
-          viewport_width: viewport_width,
-          viewport_height: viewport_height,
-          referrer:
-            payload.events.find((e) => e.event_type === "dom_load")?.metadata
-              ?.referrer || null,
-          user_agent:
-            payload.events.find((e) => e.event_type === "dom_load")?.metadata
-              ?.user_agent || null,
-        },
-      ],
+    // Check if session exists
+    const sessionQuery = await clickhouse.query({
+      query: `SELECT session_id FROM sessions WHERE session_id = '${session_id}' AND project_id = '${project_id}'`,
       format: "JSONEachRow",
     });
+    const sessionResults = await sessionQuery.json();
+    const sessionExists =
+      (sessionResults as Array<{ session_id: string }>).length > 0;
+
+    if (!sessionExists) {
+      await clickhouse.insert({
+        table: "sessions",
+        values: [
+          {
+            session_id: session_id,
+            project_id: project_id,
+            timestamp_start: timestamp,
+            page_url: page_url,
+            viewport_width: viewport_width,
+            viewport_height: viewport_height,
+            referrer:
+              payload.events.find((e) => e.event_type === "dom_load")?.metadata
+                ?.referrer ||
+              req.headers.get("referrer") ||
+              null,
+            user_agent:
+              payload.events.find((e) => e.event_type === "dom_load")?.metadata
+                ?.user_agent ||
+              req.headers.get("user-agent") ||
+              null,
+          },
+        ],
+        format: "JSONEachRow",
+      });
+    }
 
     // Prepare all events for batch insertion
     const eventValues = events.map((event) => ({
