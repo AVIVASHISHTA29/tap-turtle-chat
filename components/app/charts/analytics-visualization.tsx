@@ -17,6 +17,7 @@ import {
   AreaChart,
   Bar,
   BarChart,
+  CartesianGrid,
   Cell,
   Line,
   LineChart,
@@ -46,16 +47,19 @@ interface AnalyticsVisualizationProps {
   isHeatmap?: boolean;
 }
 
-const getChartColors = (isDark = false) => ({
-  primary: isDark ? "hsl(220 90% 50%)" : "hsl(220 85% 60%)", // A vibrant blue
-  muted: isDark ? "hsl(210 15% 25%)" : "hsl(210 20% 95%)", // Soft background for muted elements
-  background: isDark
-    ? "linear-gradient(135deg, hsl(240 10% 15%), hsl(240 10% 20%))"
-    : "linear-gradient(135deg, hsl(0 0% 100%), hsl(210 20% 95%))", // Adds subtle gradient
-  foreground: isDark ? "hsl(0 0% 90%)" : "hsl(0 0% 10%)", // Adjusted for better readability
-  accent: isDark ? "hsl(160 80% 50%)" : "hsl(160 70% 60%)", // Greenish accent for action items
-  secondary: isDark ? "hsl(290 70% 50%)" : "hsl(290 80% 60%)", // A vibrant purple
-  border: isDark ? "hsl(240 10% 30%)" : "hsl(210 20% 80%)", // Subtle contrasting borders
+const getChartColors = (isDark = true) => ({
+  primary: isDark ? "hsl(220 90% 50%)" : "hsl(220 85% 60%)",
+  muted: isDark ? "hsl(210 15% 25%)" : "hsl(210 20% 95%)",
+  background: isDark ? "hsl(240 10% 15%)" : "hsl(0 0% 100%)",
+  foreground: isDark ? "hsl(0 0% 90%)" : "hsl(0 0% 10%)",
+  accent: isDark ? "hsl(160 80% 50%)" : "hsl(160 70% 60%)",
+  secondary: isDark ? "hsl(290 70% 50%)" : "hsl(290 80% 60%)",
+  border: isDark ? "hsl(240 10% 30%)" : "hsl(210 20% 80%)",
+  tooltip: {
+    background: isDark ? "hsl(240 10% 20%)" : "hsl(0 0% 100%)",
+    text: isDark ? "hsl(0 0% 90%)" : "hsl(0 0% 10%)",
+    border: isDark ? "hsl(240 10% 30%)" : "hsl(210 20% 80%)",
+  },
 });
 
 const generateColorPalette = (length: number) => {
@@ -130,34 +134,52 @@ export function AnalyticsVisualization({
     // Add these common props for better mobile display
     const commonAxisProps = {
       tick: {
-        fontSize: 10,
+        fontSize: 12,
         fill: chartColors.foreground,
         stroke: "none",
       },
-      stroke: chartColors.foreground,
+      stroke: chartColors.border,
+      axisLine: {
+        stroke: chartColors.border,
+      },
+      gridLines: {
+        stroke: chartColors.border,
+        opacity: 0.2,
+      },
     };
 
     const commonTooltipProps = {
       contentStyle: {
-        backgroundColor: chartColors.background,
-        borderColor: chartColors.border,
-        color: chartColors.foreground,
+        backgroundColor: chartColors.tooltip.background,
+        borderColor: chartColors.tooltip.border,
+        color: chartColors.tooltip.text,
         fontSize: "12px",
         padding: "8px",
+        borderRadius: "6px",
+        border: `1px solid ${chartColors.tooltip.border}`,
       },
       wrapperStyle: {
         zIndex: 1000,
+        outline: "none",
       },
+      cursor: {
+        stroke: chartColors.border,
+        strokeWidth: 1,
+      },
+    };
+
+    const commonChartMargins = {
+      top: 20,
+      right: 30,
+      left: 10,
+      bottom: 60,
     };
 
     const chart = (() => {
       switch (selectedChart) {
         case ChartType.AREA:
           return (
-            <AreaChart
-              data={data}
-              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-            >
+            <AreaChart data={data} margin={commonChartMargins}>
               <XAxis
                 {...commonAxisProps}
                 dataKey={Object.keys(data[0]).find(
@@ -171,6 +193,11 @@ export function AnalyticsVisualization({
               />
               <YAxis {...commonAxisProps} width={40} />
               <Tooltip {...commonTooltipProps} />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={chartColors.border}
+                opacity={0.2}
+              />
               {Object.keys(data[0])
                 .filter((key) => typeof data[0][key] === "number")
                 .map((key, index) => (
@@ -189,10 +216,7 @@ export function AnalyticsVisualization({
 
         case ChartType.BAR:
           return (
-            <BarChart
-              data={data}
-              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-            >
+            <BarChart data={data} margin={commonChartMargins}>
               <XAxis
                 {...commonAxisProps}
                 dataKey={Object.keys(data[0]).find(
@@ -202,10 +226,17 @@ export function AnalyticsVisualization({
                 )}
                 angle={-45}
                 textAnchor="end"
-                height={50}
+                height={60}
+                interval={0}
+                tickMargin={30}
               />
-              <YAxis {...commonAxisProps} width={40} />
+              <YAxis {...commonAxisProps} width={50} />
               <Tooltip {...commonTooltipProps} />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={chartColors.border}
+                opacity={0.2}
+              />
               {Object.keys(data[0])
                 .filter((key) => typeof data[0][key] === "number")
                 .map((key, index) => (
@@ -245,10 +276,12 @@ export function AnalyticsVisualization({
 
         case ChartType.LINE:
           return (
-            <LineChart
-              data={data}
-              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-            >
+            <LineChart data={data} margin={commonChartMargins}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={chartColors.border}
+                opacity={0.2}
+              />
               <XAxis
                 {...commonAxisProps}
                 dataKey={Object.keys(data[0]).find(
@@ -270,6 +303,7 @@ export function AnalyticsVisualization({
                     type="monotone"
                     dataKey={key}
                     stroke={colorPalette[index]}
+                    strokeWidth={2}
                     dot={false}
                   />
                 ))}
@@ -325,7 +359,7 @@ export function AnalyticsVisualization({
     })();
 
     return (
-      <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+      <ResponsiveContainer width="100%" height="100%">
         {chart || <div>No chart available</div>}
       </ResponsiveContainer>
     );
@@ -376,7 +410,7 @@ export function AnalyticsVisualization({
             </SelectContent>
           </Select>
         </div>
-        <div className="w-full h-[300px] md:h-[400px]">{renderChart()}</div>
+        <div className="w-full h-[400px] md:h-[500px]">{renderChart()}</div>
 
         {analysis && (
           <div className="mt-4 text-sm text-muted-foreground">
