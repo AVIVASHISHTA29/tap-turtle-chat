@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     // If we have visualization data, send it as a separate message with tool invocation
     if (visualizationData) {
       return streamText({
-        model: openai("gpt-4o"),
+        model: openai("gpt-4o-mini"),
         system: `
         You're an expert analyst. You've been given an analysis with data for visualisation.
         Create a visualization using the exact data provided and include the analysis.
