@@ -208,38 +208,19 @@ export const initLangChainDB = async () => {
     Query Results: {response}
     Previous Context: {previousContext}
     
-    ANALYSIS GUIDELINES:
+    Provide your response in two parts:
+    1. A visualization section with the appropriate tool (getUserEngagement, getPageHeatmap, getVisitorsTrend, or getDeviceDistribution)
+    2. An analysis section with findings and recommendations
 
-    1. Data Interpretation:
-    - Identify significant patterns in the data
-    - Compare with historical patterns from previous context
-    - Calculate relevant metrics and ratios
-    - Highlight anomalies and trends
+    Start your response with ---VISUALIZATION_DATA--- followed by a JSON code block.
+    Then add ---ANALYSIS--- followed by your detailed analysis.
+    End with ---END---
 
-    2. Visualization Formatting:
-    - Format data for appropriate chart types
-    - Use heatmaps for spatial data (clicks)
-    - Use time series for trends
-    - Use distributions for behavioral patterns
+    Keep numbers as numbers, not strings.
+    Make your analysis clear and actionable.
+    Choose the most appropriate visualization type for the data.
 
-    3. Insight Generation:
-    - Identify UX issues and opportunities
-    - Suggest A/B test hypotheses
-    - Provide specific improvement recommendations
-    - Quantify potential impact
-
-    4. Response Structure:
-    - Key Findings (2-3 bullet points)
-    - Detailed Analysis
-    - Supporting Visualizations
-    - Actionable Recommendations
-
-    Format the response to be easily consumed by PMs and designers.
-    Include specific numbers and percentages where relevant.
-    Ensure all insights are backed by the data.
-    
-    Response:
-  `);
+    Response:`);
 
   const sqlQueryChain = RunnableSequence.from([
     {

@@ -17,40 +17,60 @@ export async function POST(request: Request) {
       question: lastMessage,
     });
 
-    console.log("analyticsResponse>>>", analyticsResponse);
+    // Parse the visualization data and analysis from the response
+    let visualizationData = null;
+    let analysis = "";
+
+    try {
+      // Extract sections using regex
+      const vizMatch = analyticsResponse.match(
+        /---VISUALIZATION_DATA---\n```json\n([\s\S]*?)\n```/
+      );
+      const analysisMatch = analyticsResponse.match(
+        /---ANALYSIS---([\s\S]*?)---END---/
+      );
+
+      if (vizMatch) {
+        const jsonStr = vizMatch[1].replace(/\/\/.*/g, "").trim(); // Remove comments
+        visualizationData = JSON.parse(jsonStr);
+      }
+
+      if (analysisMatch) {
+        analysis = analysisMatch[1].trim();
+      }
+    } catch (e) {
+      console.error("Error parsing LangChain response:", e);
+      analysis = analyticsResponse; // Fallback to showing the full response
+    }
+
+    // Prepare the system message
+    const systemMessage = `You are an AI analytics assistant that helps users understand their website analytics data.
+
+${
+  analysis
+    ? `Here's the analysis of your data:
+
+${analysis}`
+    : ""
+}
+
+${
+  visualizationData
+    ? `I'll create a visualization using the ${
+        visualizationData.type
+      } tool with the following data:
+${JSON.stringify(visualizationData, null, 2)}`
+    : ""
+}
+
+Remember to:
+1. Present the analysis clearly and maintain its structure
+2. Use the visualization data exactly as provided
+3. Don't ask for additional data or clarification`;
 
     return streamText({
       model: openai("gpt-4o"),
-      system: `You are an AI analytics assistant that helps users understand their website analytics data.
-      
-      Here is the analytics data and insights from our database:
-      ${analyticsResponse}
-      
-      Your task is to:
-      1. Present the insights in a clear, structured format
-      2. If the data suggests a visualization would be helpful, use the appropriate tool:
-      
-      - For click patterns and heatmaps, use getPageHeatmap with data in format:
-        { data: [{ x: number, y: number, value: number }] }
-      
-      - For user engagement metrics, use getUserEngagement with data in format:
-        { data: [{ metric: string, value: number }] }
-      
-      - For page performance data, use getPagePerformance with data in format:
-        { data: [{ page: string, loadTime: number, bounceRate: number, conversion: number }] }
-      
-      - For visitor trends, use getVisitorsTrend with data in format:
-        { data: [{ date: string, visitors: number, pageviews: number, bounceRate: number, avgDuration: number }] }
-      
-      - For device or browser distributions, use getDeviceDistribution or getBrowserAnalytics with data in format:
-        { data: [{ name: string, value: number }] }
-      
-      Structure your response as:
-      1. Key Findings (bullet points)
-      2. Detailed Analysis
-      3. Recommendations
-      
-      Use markdown for formatting. If you need to create a visualization, ensure the data matches the exact format required.`,
+      system: systemMessage,
       messages,
       maxSteps: 5,
       tools,
