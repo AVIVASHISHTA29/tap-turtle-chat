@@ -17,8 +17,6 @@ export async function POST(request: Request) {
       question: lastMessage,
     });
 
-    console.log("analyticsResponse", analyticsResponse);
-
     // Extract visualization data and analysis
     let visualizationData = null;
     let analysis = null;
@@ -41,38 +39,38 @@ export async function POST(request: Request) {
     }
 
     // First, send the analysis as a regular message
-    const analysisResponse = streamText({
-      model: openai("gpt-4o"),
-      messages: [
-        ...messages,
-        {
-          role: "assistant",
-          content: analysis || "No analysis available.",
-        },
-      ],
-    }).toDataStreamResponse();
+    // const analysisResponse = streamText({
+    //   model: openai("gpt-4o-mini"),
+    //   messages: [
+    //     ...messages,
+    //     {
+    //       role: "assistant",
+    //       content: analysis || "No analysis available.",
+    //     },
+    //   ],
+    // }).toDataStreamResponse();
 
     // If we have visualization data, send it as a separate message with tool invocation
-    if (visualizationData) {
-      return streamText({
-        model: openai("gpt-4o-mini"),
-        system: `
+    // if (visualizationData) {
+    return streamText({
+      model: openai("gpt-4o-mini"),
+      system: `
         You're an expert analyst. You've been given an analysis with data for visualisation.
         Create a visualization using the exact data provided and include the analysis.
         `,
-        messages: [
-          {
-            role: "user",
-            content: `Create visualization using this data: ${JSON.stringify(
-              visualizationData
-            )}. Include this exact analysis: ${analysis}`,
-          },
-        ],
-        tools,
-      }).toDataStreamResponse();
-    }
+      messages: [
+        {
+          role: "user",
+          content: `Create visualization using this data: ${JSON.stringify(
+            visualizationData
+          )}. Include this exact analysis: ${analysis}`,
+        },
+      ],
+      tools,
+    }).toDataStreamResponse();
+    // }
 
-    return analysisResponse;
+    // return analysisResponse;
   } catch (error) {
     console.error("Chat API error:", error);
     return new NextResponse(

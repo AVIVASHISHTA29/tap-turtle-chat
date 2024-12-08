@@ -75,14 +75,15 @@ class ClickhouseDatabase {
 
   async run(query: string) {
     try {
-      if (!query.trim().toUpperCase().startsWith("SELECT")) {
+      console.log("Original query:", query);
+
+      const cleanQuery = extractSQLQuery(query);
+      console.log("Extracted SQL query:", cleanQuery);
+
+      if (!cleanQuery) {
+        console.error("No valid SQL query found");
         return this.queryContext.lastResults || [];
       }
-
-      const cleanQuery = query
-        .replace(/```sql\n?/g, "")
-        .replace(/```\n?/g, "")
-        .trim();
 
       const result = await clickhouse.query({
         query: cleanQuery,
@@ -90,6 +91,7 @@ class ClickhouseDatabase {
       });
 
       const results = await result.json();
+      console.log("Query results:", results);
 
       this.queryContext = {
         lastQuery: cleanQuery,
@@ -108,16 +110,31 @@ class ClickhouseDatabase {
   }
 }
 
+function extractSQLQuery(text: string): string {
+  // Remove any markdown code blocks
+  text = text.replace(/```sql\n?/g, "").replace(/```\n?/g, "");
+
+  // Remove any explanatory text before the actual SQL
+  const sqlKeywords =
+    /(SELECT|CREATE|ALTER|INSERT|UPDATE|DELETE|DROP|TRUNCATE|WITH)/i;
+  const match = text.match(sqlKeywords);
+  if (match) {
+    text = text.slice(match.index);
+  }
+
+  return text.trim();
+}
+
 export const initLangChainDB = async () => {
   const db = new ClickhouseDatabase();
   const llm = new ChatOpenAI({
-    modelName: "gpt-4o",
+    modelName: "gpt-4",
     temperature: 0,
   });
 
   const sqlPrompt = PromptTemplate.fromTemplate(`
     You are an expert analytics engineer specializing in user behavior analysis.
-    Your task is to write SQL queries for ClickHouse that analyze user interactions and provide meaningful insights.
+    Your task is to write efficient SQL queries for ClickHouse that analyze user interactions and provide meaningful insights.
     
     Available tables and their schemas:
     {schema}
@@ -127,73 +144,97 @@ export const initLangChainDB = async () => {
     Previous Similar Queries and Results:
     {previousContext}
     
-    ANALYSIS PATTERNS AND QUERY GUIDELINES:
+    IMPORTANT: 
+    1. Respond ONLY with the SQL query, no explanations
+    2. ALWAYS use aggregations for large tables (especially events)
+    3. NEVER return raw event data - always group, count, or summarize
+    4. Use time-based partitioning when querying large date ranges
+    5. Limit results to meaningful samples when analyzing patterns
+    
+    
+    EFFICIENT QUERY PATTERNS:
 
-    1. Click Pattern Analysis:
-    - Use x_position, y_position for heatmap data
-    - Join events with sessions for device context
-    - Group by element_id, css_selector for interaction targets
-    - Calculate time between clicks for rage click detection
-    - Example patterns:
-      * Rage clicks: Multiple clicks (>3) on same element within 2 seconds
-      * Dead clicks: Clicks with no element_id or on non-interactive elements
-      * Navigation patterns: Sequence of clicks across pages
+    1. Event Volume Analysis:
+    - Use COUNT(*) with GROUP BY
+    - Aggregate by time windows (toStartOfHour, toStartOfDay)
+    - Example:
+      SELECT 
+        toStartOfHour(timestamp) as hour,
+        event_type,
+        COUNT(*) as event_count
+      FROM events
+      GROUP BY hour, event_type
+      ORDER BY hour DESC
 
-    2. Scroll Behavior Analysis:
-    - Use scroll_percentage and scroll_direction
-    - Calculate dwell time between scroll events
-    - Identify reading vs scanning patterns
-    - Example patterns:
-      * Content engagement: Time spent at each scroll depth
-      * Reading patterns: Slow scrolls with occasional up-scrolls
-      * Quick scanning: Rapid continuous scrolls
+    2. User Behavior Patterns:
+    - Use aggregation functions (avg, percentile, uniq)
+    - Sample data for pattern detection
+    - Example:
+      SELECT 
+        element_id,
+        COUNT(*) as click_count,
+        uniqExact(session_id) as unique_sessions
+      FROM events
+      WHERE event_type = 'click'
+      GROUP BY element_id
+      HAVING click_count > 10
 
-    3. Session Quality Analysis:
-    - Combine dom_load and dom_unload events
-    - Track cross-page navigation
-    - Analyze session duration and interaction density
-    - Example patterns:
-      * Engagement score: Interactions per minute
-      * Session depth: Number of pages visited
-      * Exit triggers: Last interaction before dom_unload
+    3. Session Analysis:
+    - Pre-aggregate metrics at session level
+    - Use window functions for sequential analysis
+    - Example:
+      SELECT 
+        session_id,
+        COUNT(DISTINCT event_type) as interaction_types,
+        MAX(timestamp) - MIN(timestamp) as session_duration
+      FROM events
+      GROUP BY session_id
 
-    4. User Journey Analysis:
-    - Use timestamp ordering of events
-    - Track page_url sequences
-    - Analyze interaction patterns between pages
-    - Example patterns:
-      * Common paths: Frequent page_url sequences
-      * Drop-off points: Last page_url before exit
-      * Success paths: Sessions with desired outcomes
+    4. Performance Metrics:
+    - Use quantile functions for distribution analysis
+    - Aggregate by relevant dimensions
+    - Example:
+      SELECT 
+        user_agent,
+        count() as sample_size,
+        quantile(0.95)(load_time) as p95_load_time
+      FROM sessions
+      GROUP BY user_agent
 
-    5. Performance Impact Analysis:
-    - Calculate time between dom_load events
-    - Group by user_agent and viewport dimensions
-    - Correlate with session duration
-    - Example patterns:
-      * Load time impact: Session duration vs load time
-      * Device issues: Performance by user_agent
-      * Viewport problems: Issues at specific dimensions
+    5. Funnel Analysis:
+    - Use window functions and aggregates
+    - Focus on conversion rates between steps
+    - Example:
+      WITH step_counts AS (
+        SELECT 
+          step_name,
+          COUNT(DISTINCT session_id) as users_at_step
+        FROM events
+        GROUP BY step_name
+      )
 
-    6. Frustration Detection:
-    - Combine click, scroll, and mouse_move events
-    - Look for rapid repetitive patterns
-    - Analyze exit triggers
-    - Example patterns:
-      * Rage clicks: Multiple rapid clicks
-      * Erratic scrolling: Quick direction changes
-      * Abandonment: Interaction sequence before exit
+    6. Heatmap Data:
+    - Use grid-based aggregation
+    - Round coordinates to reduce granularity
+    - Example:
+      SELECT 
+        round(x_position/10)*10 as x_grid,
+        round(y_position/10)*10 as y_grid,
+        COUNT(*) as click_count
+      FROM events
+      WHERE event_type = 'click'
+      GROUP BY x_grid, y_grid
 
-    QUERY WRITING RULES:
-    1. Always include project_id in WHERE clauses
-    2. Use appropriate time ranges (last day, week, month)
-    3. Join tables efficiently (sessions -> events)
-    4. Calculate relevant metrics based on analysis type
-    5. Format results suitable for visualization
-    6. Use CTEs for complex analysis
-    7. Include relevant dimension columns
+    OPTIMIZATION RULES:
+    1. Always include WHERE clauses for date ranges
+    2. Use appropriate aggregation functions
+    3. Avoid SELECT * or returning raw events
+    4. Limit result sets to meaningful samples
+    5. Use materialized views for common aggregations
+    6. Include LIMIT clauses for exploratory queries
+    7. Use approximate functions for high-cardinality data (uniqHLL instead of uniqExact)
 
-    Write a SQL query that provides detailed analytics. Use ClickHouse SQL syntax.
+    Write an efficient SQL query that provides aggregated analytics. Use ClickHouse SQL syntax.
     If multiple queries are needed, separate them with semicolons.
     
     SQL QUERY:
@@ -224,11 +265,23 @@ export const initLangChainDB = async () => {
 
   const sqlQueryChain = RunnableSequence.from([
     {
-      schema: async () => db.getTableInfo(),
+      schema: async () => {
+        try {
+          return await db.getTableInfo();
+        } catch (error) {
+          console.error("Error getting schema:", error);
+          throw error;
+        }
+      },
       question: (input: { question: string }) => input.question,
       previousContext: async (input: { question: string }) => {
-        const similarContexts = await retrieveSimilarContexts(input.question);
-        return JSON.stringify(similarContexts, null, 2);
+        try {
+          const similarContexts = await retrieveSimilarContexts(input.question);
+          return JSON.stringify(similarContexts, null, 2);
+        } catch (error) {
+          console.error("Error getting previous context:", error);
+          return "[]";
+        }
       },
     },
     sqlPrompt,
