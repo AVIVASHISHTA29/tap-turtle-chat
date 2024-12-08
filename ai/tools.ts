@@ -12,12 +12,15 @@ const chartTypeSchema = z
     ChartType.SCATTER,
   ])
   .optional();
-const baseAnalyticsSchema = z.object({
-  analysis: z.string(),
-  preferredChart: chartTypeSchema,
-});
 
-const visitorTrendSchema = baseAnalyticsSchema.extend({
+// Base schema for analytics metadata
+// const baseAnalyticsSchema = z.object({
+//   analysis: z.string(),
+//   preferredChart: chartTypeSchema,
+// });
+
+// Separate data schemas
+const visitorTrendDataSchema = z.object({
   date: z.string(),
   visitors: z.number(),
   pageviews: z.number(),
@@ -25,19 +28,19 @@ const visitorTrendSchema = baseAnalyticsSchema.extend({
   avgDuration: z.number(),
 });
 
-const distributionSchema = baseAnalyticsSchema.extend({
+const distributionDataSchema = z.object({
   name: z.string(),
   value: z.number(),
 });
 
-const pagePerformanceSchema = baseAnalyticsSchema.extend({
+const pagePerformanceDataSchema = z.object({
   page: z.string(),
   loadTime: z.number(),
   bounceRate: z.number(),
   conversion: z.number(),
 });
 
-const heatmapSchema = baseAnalyticsSchema.extend({
+const heatmapDataSchema = z.object({
   x: z.number(),
   y: z.number(),
   value: z.number(),
@@ -46,7 +49,7 @@ const heatmapSchema = baseAnalyticsSchema.extend({
 export const visitorsTrendTool = createTool({
   description: "Visualize visitor trends over time with multiple metrics",
   parameters: z.object({
-    data: z.array(visitorTrendSchema),
+    data: z.array(visitorTrendDataSchema),
     analysis: z.string(),
     preferredChart: chartTypeSchema,
   }),
@@ -64,7 +67,7 @@ export const visitorsTrendTool = createTool({
 export const deviceDistributionTool = createTool({
   description: "Visualize device usage distribution",
   parameters: z.object({
-    data: z.array(distributionSchema),
+    data: z.array(distributionDataSchema),
     analysis: z.string(),
     preferredChart: chartTypeSchema,
   }),
@@ -82,7 +85,7 @@ export const deviceDistributionTool = createTool({
 export const browserAnalyticsTool = createTool({
   description: "Visualize browser usage analytics",
   parameters: z.object({
-    data: z.array(distributionSchema),
+    data: z.array(distributionDataSchema),
     analysis: z.string(),
     preferredChart: chartTypeSchema,
   }),
@@ -100,7 +103,7 @@ export const browserAnalyticsTool = createTool({
 export const userEngagementTool = createTool({
   description: "Visualize user engagement metrics",
   parameters: z.object({
-    data: z.array(distributionSchema),
+    data: z.array(distributionDataSchema),
     analysis: z.string(),
     preferredChart: chartTypeSchema,
   }),
@@ -118,7 +121,7 @@ export const userEngagementTool = createTool({
 export const pagePerformanceTool = createTool({
   description: "Visualize page performance metrics",
   parameters: z.object({
-    data: z.array(pagePerformanceSchema),
+    data: z.array(pagePerformanceDataSchema),
     analysis: z.string(),
     preferredChart: chartTypeSchema,
   }),
@@ -136,7 +139,7 @@ export const pagePerformanceTool = createTool({
 export const pageHeatmapTool = createTool({
   description: "Visualize click heatmap data",
   parameters: z.object({
-    data: z.array(heatmapSchema),
+    data: z.array(heatmapDataSchema),
     analysis: z.string(),
     page: z.string().optional().default("home"),
   }),
