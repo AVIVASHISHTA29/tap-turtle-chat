@@ -23,6 +23,7 @@ class ClickhouseDatabase {
           type
         FROM system.columns 
         WHERE database = currentDatabase()
+        AND table IN ('projects', 'sessions', 'events')
       `,
       format: "JSONEachRow",
     });
@@ -30,9 +31,46 @@ class ClickhouseDatabase {
     const tablesInfo = await tables.json();
     return tablesInfo
       .map(
-        (row: any) => `Table: ${row.table}, Column: ${row.name} (${row.type})`
+        (row: any) =>
+          `Table: ${row.table}
+         Column: ${row.name} (${row.type})
+         ${this.getColumnContext(row.table, row.name)}`
       )
       .join("\n");
+  }
+
+  private getColumnContext(table: string, column: string): string {
+    const contextMap: Record<string, Record<string, string>> = {
+      events: {
+        event_type:
+          "Enum: click, scroll, mouse_move, dom_load, dom_unload. Use for behavior analysis.",
+        scroll_direction: "Enum: up, down. Indicates scroll behavior.",
+        x_position:
+          "Float32: Click/mouse X coordinate (0-100%). Use for heatmaps.",
+        y_position:
+          "Float32: Click/mouse Y coordinate (0-100%). Use for heatmaps.",
+        metadata: "JSON string with event-specific data.",
+        text_content: "String: Text content of interacted element.",
+        html_content: "String: HTML content of interacted element.",
+        scroll_percentage: "UInt8: Page scroll depth (0-100).",
+        element_id: "String: DOM element ID of interacted element.",
+        css_selector: "String: Full CSS path to interacted element.",
+      },
+      sessions: {
+        viewport_width: "UInt16: Browser window width in pixels.",
+        viewport_height: "UInt16: Browser window height in pixels.",
+        user_agent: "String: Browser and device information.",
+        referrer: "String: Traffic source URL.",
+        timestamp_start: "DateTime: Session start time.",
+        page_url: "String: Current page URL.",
+      },
+      projects: {
+        project_id: "UUID: Links events and sessions to projects.",
+        created_at: "DateTime: Project creation timestamp.",
+      },
+    };
+
+    return contextMap[table]?.[column] || "";
   }
 
   async run(query: string) {
@@ -73,13 +111,13 @@ class ClickhouseDatabase {
 export const initLangChainDB = async () => {
   const db = new ClickhouseDatabase();
   const llm = new ChatOpenAI({
-    modelName: "gpt-4",
+    modelName: "gpt-4o",
     temperature: 0,
   });
 
   const sqlPrompt = PromptTemplate.fromTemplate(`
-    You are an analytics expert. Based on the user's question and previous context, write SQL queries that provide comprehensive analytics.
-    Always try to get numerical data that can be visualized.
+    You are an expert analytics engineer specializing in user behavior analysis.
+    Your task is to write SQL queries for ClickHouse that analyze user interactions and provide meaningful insights.
     
     Available tables and their schemas:
     {schema}
@@ -89,45 +127,116 @@ export const initLangChainDB = async () => {
     Previous Similar Queries and Results:
     {previousContext}
     
-    Guidelines:
-    1. If the user asks about trends, include time-based grouping
-    2. For comparisons, include counts and percentages
-    3. When analyzing events, consider grouping by type, page, or time
-    4. Always include relevant metrics that could be visualized
-    5. If the user asks about previous results, respond with "USE_PREVIOUS_RESULTS"
-    6. Use the previous context to improve your query and avoid redundant queries
-    
+    ANALYSIS PATTERNS AND QUERY GUIDELINES:
+
+    1. Click Pattern Analysis:
+    - Use x_position, y_position for heatmap data
+    - Join events with sessions for device context
+    - Group by element_id, css_selector for interaction targets
+    - Calculate time between clicks for rage click detection
+    - Example patterns:
+      * Rage clicks: Multiple clicks (>3) on same element within 2 seconds
+      * Dead clicks: Clicks with no element_id or on non-interactive elements
+      * Navigation patterns: Sequence of clicks across pages
+
+    2. Scroll Behavior Analysis:
+    - Use scroll_percentage and scroll_direction
+    - Calculate dwell time between scroll events
+    - Identify reading vs scanning patterns
+    - Example patterns:
+      * Content engagement: Time spent at each scroll depth
+      * Reading patterns: Slow scrolls with occasional up-scrolls
+      * Quick scanning: Rapid continuous scrolls
+
+    3. Session Quality Analysis:
+    - Combine dom_load and dom_unload events
+    - Track cross-page navigation
+    - Analyze session duration and interaction density
+    - Example patterns:
+      * Engagement score: Interactions per minute
+      * Session depth: Number of pages visited
+      * Exit triggers: Last interaction before dom_unload
+
+    4. User Journey Analysis:
+    - Use timestamp ordering of events
+    - Track page_url sequences
+    - Analyze interaction patterns between pages
+    - Example patterns:
+      * Common paths: Frequent page_url sequences
+      * Drop-off points: Last page_url before exit
+      * Success paths: Sessions with desired outcomes
+
+    5. Performance Impact Analysis:
+    - Calculate time between dom_load events
+    - Group by user_agent and viewport dimensions
+    - Correlate with session duration
+    - Example patterns:
+      * Load time impact: Session duration vs load time
+      * Device issues: Performance by user_agent
+      * Viewport problems: Issues at specific dimensions
+
+    6. Frustration Detection:
+    - Combine click, scroll, and mouse_move events
+    - Look for rapid repetitive patterns
+    - Analyze exit triggers
+    - Example patterns:
+      * Rage clicks: Multiple rapid clicks
+      * Erratic scrolling: Quick direction changes
+      * Abandonment: Interaction sequence before exit
+
+    QUERY WRITING RULES:
+    1. Always include project_id in WHERE clauses
+    2. Use appropriate time ranges (last day, week, month)
+    3. Join tables efficiently (sessions -> events)
+    4. Calculate relevant metrics based on analysis type
+    5. Format results suitable for visualization
+    6. Use CTEs for complex analysis
+    7. Include relevant dimension columns
+
     Write a SQL query that provides detailed analytics. Use ClickHouse SQL syntax.
+    If multiple queries are needed, separate them with semicolons.
     
     SQL QUERY:
   `);
 
   const responsePrompt = PromptTemplate.fromTemplate(`
-    You are an analytics expert who always provides insights with visualizations.
+    You are an expert product analyst who helps product managers and designers understand user behavior.
     
     Schema: {schema}
     Question: {question}
     SQL Query: {query}
-    Results: {response}
+    Query Results: {response}
     Previous Context: {previousContext}
     
-    Instructions:
-    1. ALWAYS analyze the numerical data and provide specific statistics
-    2. ALWAYS create at least one visualization using the appropriate tool
-    3. Format the data according to the visualization schema that best fits the data
-    4. If the data shows trends, use getVisitorsTrend or getUserEngagement
-    5. If the data shows distribution, use getDeviceDistribution or getBrowserAnalytics
-    6. If the data is about pages, use getPagePerformance
-    7. If the data involves click positions, use getPageHeatmap
-    8. Add insights about what the data and visualization reveal
-    9. Reference previous similar queries to provide context and comparisons
-    
-    Format your response as:
-    1. Key Statistics: (list the important numbers)
-    2. Visualization: (include the formatted data for the visualization)
-    3. Insights: (explain what the data suggests, including historical context)
-    
-    Remember: ALWAYS include a visualization - transform the data to fit the appropriate visualization schema.
+    ANALYSIS GUIDELINES:
+
+    1. Data Interpretation:
+    - Identify significant patterns in the data
+    - Compare with historical patterns from previous context
+    - Calculate relevant metrics and ratios
+    - Highlight anomalies and trends
+
+    2. Visualization Formatting:
+    - Format data for appropriate chart types
+    - Use heatmaps for spatial data (clicks)
+    - Use time series for trends
+    - Use distributions for behavioral patterns
+
+    3. Insight Generation:
+    - Identify UX issues and opportunities
+    - Suggest A/B test hypotheses
+    - Provide specific improvement recommendations
+    - Quantify potential impact
+
+    4. Response Structure:
+    - Key Findings (2-3 bullet points)
+    - Detailed Analysis
+    - Supporting Visualizations
+    - Actionable Recommendations
+
+    Format the response to be easily consumed by PMs and designers.
+    Include specific numbers and percentages where relevant.
+    Ensure all insights are backed by the data.
     
     Response:
   `);
@@ -160,7 +269,6 @@ export const initLangChainDB = async () => {
           : input.query,
       response: async (input) => {
         const results = await db.run(input.query);
-        // Store the context in Pinecone
         await storeQueryContext(input.question, input.query, results);
         return results;
       },

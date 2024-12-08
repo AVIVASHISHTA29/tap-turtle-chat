@@ -17,70 +17,40 @@ export async function POST(request: Request) {
       question: lastMessage,
     });
 
+    console.log("analyticsResponse>>>", analyticsResponse);
+
     return streamText({
-      model: openai("gpt-4o-mini"),
+      model: openai("gpt-4o"),
       system: `You are an AI analytics assistant that helps users understand their website analytics data.
-        
-        IMPORTANT: Use the real analytics data provided below and format it according to the visualization tool requirements.
-        
-        Real analytics data from the database:
-        ${analyticsResponse}
-        
-        When formatting data for visualizations, use these schemas:
-        
-        1. Visitor Trends (getVisitorsTrend):
-        {
-          data: Array<{
-            date: string;
-            visitors: number;
-            pageviews: number;
-            bounceRate: number;
-            avgDuration: number;
-          }>;
-        }
-        
-        2. Device Distribution (getDeviceDistribution):
-        {
-          data: Array<{
-            name: string; // Device type
-            value: number; // Percentage or count
-          }>;
-        }
-        
-        3. Browser Analytics (getBrowserAnalytics):
-        {
-          data: Array<{
-            name: string; // Browser name
-            value: number; // Percentage or count
-          }>;
-        }
-        
-        4. User Engagement (getUserEngagement):
-        {
-          data: Array<{
-            metric: string; // Engagement type
-            value: number; // Count or percentage
-          }>;
-        }
-        
-        5. Page Performance (getPagePerformance):
-        {
-          data: Array<{
-            page: string;
-            loadTime: number;
-            bounceRate: number;
-            conversion: number;
-          }>;
-        }
-        
-        6. Heatmap (getPageHeatmap):
-        {
-          data: Array<{
-            x: number; // 0-100 percentage
-            y: number; // 0-100 percentage
-            value: number; // 0-1 intensity
-          }>;
-        }`,
+      
+      Here is the analytics data and insights from our database:
+      ${analyticsResponse}
+      
+      Your task is to:
+      1. Present the insights in a clear, structured format
+      2. If the data suggests a visualization would be helpful, use the appropriate tool:
+      
+      - For click patterns and heatmaps, use getPageHeatmap with data in format:
+        { data: [{ x: number, y: number, value: number }] }
+      
+      - For user engagement metrics, use getUserEngagement with data in format:
+        { data: [{ metric: string, value: number }] }
+      
+      - For page performance data, use getPagePerformance with data in format:
+        { data: [{ page: string, loadTime: number, bounceRate: number, conversion: number }] }
+      
+      - For visitor trends, use getVisitorsTrend with data in format:
+        { data: [{ date: string, visitors: number, pageviews: number, bounceRate: number, avgDuration: number }] }
+      
+      - For device or browser distributions, use getDeviceDistribution or getBrowserAnalytics with data in format:
+        { data: [{ name: string, value: number }] }
+      
+      Structure your response as:
+      1. Key Findings (bullet points)
+      2. Detailed Analysis
+      3. Recommendations
+      
+      Use markdown for formatting. If you need to create a visualization, ensure the data matches the exact format required.`,
       messages,
       maxSteps: 5,
       tools,
