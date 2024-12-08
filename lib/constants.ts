@@ -1,7 +1,7 @@
 export const EXAMPLE_QUERIES = [
   {
-    label: "Visitor Trends",
-    query: "Show me the visitor trends for the last 7 days",
+    label: "Clicks Analysis",
+    query: "Show me all the clicks and interactions on the website",
   },
   {
     label: "Device Usage",
@@ -13,11 +13,12 @@ export const EXAMPLE_QUERIES = [
   },
   {
     label: "User Engagement",
-    query: "How are users engaging with the website?",
+    query:
+      "Show me all the user interactions on the website by event and session",
   },
   {
     label: "Page Performance",
-    query: "Which pages are performing best?",
+    query: "Show me the page performance metrics, by events and sessions",
   },
   {
     label: "Heatmap",
