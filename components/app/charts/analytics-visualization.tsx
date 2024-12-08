@@ -3,6 +3,7 @@
 
 import { ChartType } from "@/ai/types";
 import { Card } from "@/components/ui/card";
+import MarkdownRenderer from "@/components/ui/markdown";
 import {
   Select,
   SelectContent,
@@ -39,30 +40,33 @@ interface AnalyticsVisualizationProps {
   type: string;
   data: Record<string, any>[];
   title: string;
-  insight: string;
+  analysis: string;
+  insight?: string;
   preferredChart?: ChartType;
   isHeatmap?: boolean;
 }
 
 const getChartColors = (isDark = false) => ({
-  primary: isDark ? "hsl(var(--primary))" : "hsl(var(--primary))",
-  muted: isDark ? "hsl(var(--muted))" : "hsl(var(--muted))",
-  background: isDark ? "hsl(var(--background))" : "hsl(var(--background))",
-  foreground: isDark ? "hsl(var(--foreground))" : "hsl(var(--foreground))",
-  accent: "hsl(var(--accent))",
-  secondary: "hsl(var(--secondary))",
-  border: "hsl(var(--border))",
+  primary: isDark ? "hsl(220 90% 50%)" : "hsl(220 85% 60%)", // A vibrant blue
+  muted: isDark ? "hsl(210 15% 25%)" : "hsl(210 20% 95%)", // Soft background for muted elements
+  background: isDark
+    ? "linear-gradient(135deg, hsl(240 10% 15%), hsl(240 10% 20%))"
+    : "linear-gradient(135deg, hsl(0 0% 100%), hsl(210 20% 95%))", // Adds subtle gradient
+  foreground: isDark ? "hsl(0 0% 90%)" : "hsl(0 0% 10%)", // Adjusted for better readability
+  accent: isDark ? "hsl(160 80% 50%)" : "hsl(160 70% 60%)", // Greenish accent for action items
+  secondary: isDark ? "hsl(290 70% 50%)" : "hsl(290 80% 60%)", // A vibrant purple
+  border: isDark ? "hsl(240 10% 30%)" : "hsl(210 20% 80%)", // Subtle contrasting borders
 });
 
 const generateColorPalette = (length: number) => {
   const colors = [
-    "hsl(var(--primary))",
-    "hsl(var(--accent))",
-    "hsl(var(--secondary))",
-    "hsl(217 91% 60%)", // blue
-    "hsl(292 91% 73%)", // pink
-    "hsl(144 61% 60%)", // green
-    "hsl(31 91% 65%)", // orange
+    "hsl(220 90% 50%)", // Vibrant blue
+    "hsl(160 80% 50%)", // Green
+    "hsl(290 70% 50%)", // Purple
+    "hsl(44 90% 50%)", // Yellow
+    "hsl(0 80% 50%)", // Red
+    "hsl(31 91% 65%)", // Orange
+    "hsl(292 91% 73%)", // Pink
   ];
 
   return Array.from({ length }, (_, i) => colors[i % colors.length]);
@@ -71,6 +75,7 @@ const generateColorPalette = (length: number) => {
 export function AnalyticsVisualization({
   data,
   title,
+  analysis,
   insight,
   preferredChart,
   isHeatmap = false,
@@ -371,11 +376,19 @@ export function AnalyticsVisualization({
             </SelectContent>
           </Select>
         </div>
-        <p className="text-xs md:text-sm text-muted-foreground mt-1">
-          {insight}
-        </p>
+        <div className="w-full h-[300px] md:h-[400px]">{renderChart()}</div>
+
+        {analysis && (
+          <div className="mt-4 text-sm text-muted-foreground">
+            <MarkdownRenderer content={analysis} />
+          </div>
+        )}
+        {insight && (
+          <p className="text-xs md:text-sm text-muted-foreground mt-1">
+            {insight}
+          </p>
+        )}
       </div>
-      <div className="w-full h-[300px] md:h-[400px]">{renderChart()}</div>
     </Card>
   );
 }

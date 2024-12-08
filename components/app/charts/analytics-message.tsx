@@ -3,6 +3,7 @@
 
 import { ChartType } from "@/ai/types";
 import { Card } from "@/components/ui/card";
+import MarkdownRenderer from "@/components/ui/markdown";
 import { cn } from "@/lib/utils";
 import { Message } from "ai";
 import { AnalyticsVisualization } from "./analytics-visualization";
@@ -12,6 +13,7 @@ interface AnalyticsMessageProps {
 }
 
 export function AnalyticsMessage({ message }: AnalyticsMessageProps) {
+  console.log("message", message);
   return (
     <Card
       className={cn(
@@ -23,7 +25,7 @@ export function AnalyticsMessage({ message }: AnalyticsMessageProps) {
         <div className="text-sm md:text-base font-medium">
           {message.role === "assistant" ? "AI Assistant" : "You"}
         </div>
-        <div className="text-xs md:text-sm">{message.content}</div>
+        <MarkdownRenderer content={message.content} />
 
         {message.toolInvocations?.map((toolInvocation) => {
           if (toolInvocation.state === "result") {
@@ -33,6 +35,7 @@ export function AnalyticsMessage({ message }: AnalyticsMessageProps) {
               type: string;
               data: unknown;
               preferredChart?: ChartType;
+              analysis: string;
             };
 
             return (
@@ -44,6 +47,7 @@ export function AnalyticsMessage({ message }: AnalyticsMessageProps) {
                 insight={result.insight}
                 preferredChart={result.preferredChart}
                 isHeatmap={toolInvocation.toolName === "getPageHeatmap"}
+                analysis={result.analysis}
               />
             );
           }

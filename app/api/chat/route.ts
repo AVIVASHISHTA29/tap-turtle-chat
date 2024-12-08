@@ -17,64 +17,62 @@ export async function POST(request: Request) {
       question: lastMessage,
     });
 
-    // Parse the visualization data and analysis from the response
-    let visualizationData = null;
-    let analysis = "";
+    console.log("analyticsResponse", analyticsResponse);
 
+    // Extract visualization data and analysis
+    let visualizationData = null;
+    let analysis = null;
     try {
-      // Extract sections using regex
       const vizMatch = analyticsResponse.match(
         /---VISUALIZATION_DATA---\n```json\n([\s\S]*?)\n```/
       );
       const analysisMatch = analyticsResponse.match(
-        /---ANALYSIS---([\s\S]*?)---END---/
+        /---ANALYSIS---\n([\s\S]*?)\n---END---/
       );
 
       if (vizMatch) {
-        const jsonStr = vizMatch[1].replace(/\/\/.*/g, "").trim(); // Remove comments
-        visualizationData = JSON.parse(jsonStr);
+        visualizationData = JSON.parse(vizMatch[1]);
       }
-
       if (analysisMatch) {
         analysis = analysisMatch[1].trim();
       }
     } catch (e) {
-      console.error("Error parsing LangChain response:", e);
-      analysis = analyticsResponse; // Fallback to showing the full response
+      console.error("Error parsing response sections:", e);
     }
 
-    // Prepare the system message
-    const systemMessage = `You are an AI analytics assistant that helps users understand their website analytics data.
-
-${
-  analysis
-    ? `Here's the analysis of your data:
-
-${analysis}`
-    : ""
-}
-
-${
-  visualizationData
-    ? `I'll create a visualization using the ${
-        visualizationData.type
-      } tool with the following data:
-${JSON.stringify(visualizationData, null, 2)}`
-    : ""
-}
-
-Remember to:
-1. Present the analysis clearly and maintain its structure
-2. Use the visualization data exactly as provided
-3. Don't ask for additional data or clarification`;
-
-    return streamText({
+    // First, send the analysis as a regular message
+    const analysisResponse = streamText({
       model: openai("gpt-4o"),
-      system: systemMessage,
-      messages,
-      maxSteps: 5,
-      tools,
+      messages: [
+        ...messages,
+        {
+          role: "assistant",
+          content: analysis || "No analysis available.",
+        },
+      ],
     }).toDataStreamResponse();
+
+    // If we have visualization data, send it as a separate message with tool invocation
+    if (visualizationData) {
+      return streamText({
+        model: openai("gpt-4o"),
+        system: `
+        You're an expert analyst. You've been given an analysis with data for visualisation.
+        Create a visualization using the exact data provided and include the analysis.
+        `,
+        messages: [
+          {
+            role: "user",
+            content: `Create visualization using this data: ${JSON.stringify(
+              visualizationData
+            )}. Include this exact analysis: ${analysis}`,
+          },
+        ],
+        tools,
+      }).toDataStreamResponse();
+    }
+
+    return analysisResponse;
   } catch (error) {
     console.error("Chat API error:", error);
     return new NextResponse(
