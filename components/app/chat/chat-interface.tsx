@@ -10,7 +10,15 @@ import { LoadingMessage } from "./loading-message";
 import { WelcomeSection } from "./welcome-section";
 
 export function ChatInterface() {
-  const { messages, input, setInput, handleSubmit, isLoading } = useChat({
+  const {
+    messages,
+    input,
+    setInput,
+    handleSubmit,
+    isLoading,
+    reload,
+    setMessages,
+  } = useChat({
     api: "/api/chat",
   });
 
@@ -30,6 +38,11 @@ export function ChatInterface() {
   const handleExampleClick = (query: string) => {
     pendingSubmission.current = query;
     setInput(query);
+  };
+
+  const handleClearChat = () => {
+    setMessages([]);
+    reload();
   };
 
   return (
@@ -52,6 +65,7 @@ export function ChatInterface() {
           onInputChange={setInput}
           onSubmit={handleSubmit}
           onExampleClick={handleExampleClick}
+          handleClearChat={handleClearChat}
         />
       </div>
     </Card>

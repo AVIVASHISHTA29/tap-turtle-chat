@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EXAMPLE_QUERIES } from "@/lib/constants";
-import { Send } from "lucide-react";
+import { Send, Trash } from "lucide-react";
 
 interface ChatInputProps {
   input: string;
@@ -10,6 +10,7 @@ interface ChatInputProps {
   onInputChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onExampleClick: (query: string) => void;
+  handleClearChat: () => void;
 }
 
 export function ChatInput({
@@ -19,6 +20,7 @@ export function ChatInput({
   onInputChange,
   onSubmit,
   onExampleClick,
+  handleClearChat,
 }: ChatInputProps) {
   return (
     <div className="p-2 md:p-4 border-t">
@@ -33,21 +35,34 @@ export function ChatInput({
           <Send className="h-4 w-4" />
         </Button>
       </form>
-      {showSuggestions && (
-        <div className="mt-2 flex flex-wrap gap-1 md:gap-2">
-          {EXAMPLE_QUERIES.map((example) => (
-            <Button
-              key={example.label}
-              variant="outline"
-              size="sm"
-              onClick={() => onExampleClick(example.query)}
-              className="text-xs"
-            >
-              {example.label}
-            </Button>
-          ))}
-        </div>
-      )}
+      <div className="flex flex-row justify-between w-full">
+        {showSuggestions && (
+          <div className="mt-2 flex flex-wrap gap-1 md:gap-2">
+            {EXAMPLE_QUERIES.map((example) => (
+              <Button
+                key={example.label}
+                variant="outline"
+                size="sm"
+                onClick={() => onExampleClick(example.query)}
+                className="text-xs"
+              >
+                {example.label}
+              </Button>
+            ))}
+          </div>
+        )}
+        {showSuggestions && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearChat}
+            className="mt-2"
+          >
+            <Trash className="h-4 w-4" />
+            Clear Chat
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
