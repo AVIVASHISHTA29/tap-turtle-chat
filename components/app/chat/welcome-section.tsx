@@ -1,11 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { EXAMPLE_QUERIES } from "@/lib/constants";
+import { useRouter } from "next/navigation";
 
 interface WelcomeSectionProps {
   onExampleClick: (query: string) => void;
 }
 
 export function WelcomeSection({ onExampleClick }: WelcomeSectionProps) {
+  const router = useRouter();
+
   return (
     <div className="flex flex-col items-center justify-center min-h-32 text-center ">
       <div className="flex justify-center items-center rounded-full p-4 my-4">
@@ -32,7 +35,12 @@ export function WelcomeSection({ onExampleClick }: WelcomeSectionProps) {
       <p className="text-md text-muted-foreground mb-4">
         Look At Session Recordings & Analysis
       </p>
-      <Button variant="outline" size="sm" className="text-sm">
+      <Button
+        variant="outline"
+        size="sm"
+        className="text-sm"
+        onClick={() => router.push("/recordings")}
+      >
         View Session Analytics
       </Button>
     </div>

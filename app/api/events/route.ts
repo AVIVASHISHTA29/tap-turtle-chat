@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
     const decompressedData = pako.inflate(new Uint8Array(compressedData), {
       to: "string",
     });
+
     const jsonData = JSON.parse(decompressedData);
 
     // Validate the payload
