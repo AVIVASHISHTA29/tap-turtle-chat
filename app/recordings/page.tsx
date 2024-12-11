@@ -16,8 +16,10 @@ export default async function RecordingsPage() {
   const sessions = await fetchSessions();
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-semibold mb-4">Recording Sessions</h1>
+    <div className="container mx-auto p-8 max-w-[1400px]">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold">Session Recordings</h1>
+      </div>
       <RecordingList sessions={sessions} />
     </div>
   );

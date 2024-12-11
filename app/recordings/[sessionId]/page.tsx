@@ -1,6 +1,9 @@
 // app/recordings/[sessionId]/page.tsx
 
 import { RecordingPlayer } from "@/components/app/recording/recording-player";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 async function fetchEvents(sessionId: string) {
@@ -27,10 +30,21 @@ export default async function RecordingSessionPage({
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-xl font-semibold mb-4">
-        Replay Session: {sessionId}
-      </h1>
+    <div className="container mx-auto p-8 max-w-[1400px]">
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/recordings" className="flex items-center gap-2">
+            <ChevronLeft className="h-4 w-4" />
+            Back to Recordings
+          </Link>
+        </Button>
+      </div>
+
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold">
+          Session Recording: {sessionId}
+        </h1>
+      </div>
       <RecordingPlayer events={events} />
     </div>
   );

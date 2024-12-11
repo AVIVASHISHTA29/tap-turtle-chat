@@ -3,6 +3,7 @@
 
 import { useEffect, useRef } from "react";
 
+import { Card } from "@/components/ui/card";
 import rrwebPlayer from "rrweb-player";
 import "rrweb-player/dist/style.css";
 import { eventWithTimeAndPacker } from "rrweb/typings/packer/base";
@@ -21,12 +22,16 @@ export function RecordingPlayer({ events }: RecordingPlayerProps) {
         props: {
           events: events as eventWithTimeAndPacker[],
           autoPlay: false,
+          height: 600,
+          width: 1000,
         },
       });
     }
   }, [events]);
 
   return (
-    <div ref={playerRef} className="w-full h-[600px] border border-gray-300" />
+    <Card className="max-w-[1200px] mx-auto flex justify-center items-center w-fit">
+      <div ref={playerRef} className="w-[1000px] h-[680px]" />
+    </Card>
   );
 }

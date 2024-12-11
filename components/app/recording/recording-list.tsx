@@ -1,6 +1,15 @@
 // components/recording-list.tsx
 "use client";
 
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import Link from "next/link";
 
 interface Session {
@@ -17,38 +26,39 @@ interface Session {
 
 export function RecordingList({ sessions }: { sessions: Session[] }) {
   return (
-    <table className="w-full border-collapse border border-gray-300 text-sm">
-      <thead>
-        <tr className="bg-gray-100">
-          <th className="border border-gray-300 p-2">Session ID</th>
-          <th className="border border-gray-300 p-2">Start Time</th>
-          <th className="border border-gray-300 p-2">Page URL</th>
-          <th className="border border-gray-300 p-2">Dimensions</th>
-          <th className="border border-gray-300 p-2">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {sessions.map((session) => (
-          <tr key={session.session_id} className="hover:bg-gray-50">
-            <td className="border border-gray-300 p-2">{session.session_id}</td>
-            <td className="border border-gray-300 p-2">
-              {session.start_timestamp}
-            </td>
-            <td className="border border-gray-300 p-2">{session.page_url}</td>
-            <td className="border border-gray-300 p-2">
-              {session.viewport_width} x {session.viewport_height}
-            </td>
-            <td className="border border-gray-300 p-2">
-              <Link
-                href={`/recordings/${session.session_id}`}
-                className="underline text-blue-600 hover:text-blue-800"
-              >
-                Replay
-              </Link>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Session ID</TableHead>
+            <TableHead>Start Time</TableHead>
+            <TableHead>Page URL</TableHead>
+            <TableHead>Dimensions</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sessions.map((session) => (
+            <TableRow key={session.session_id}>
+              <TableCell className="font-medium">
+                {session.session_id}
+              </TableCell>
+              <TableCell>{session.start_timestamp}</TableCell>
+              <TableCell>{session.page_url}</TableCell>
+              <TableCell>
+                {session.viewport_width} x {session.viewport_height}
+              </TableCell>
+              <TableCell>
+                <Button variant="link" asChild>
+                  <Link href={`/recordings/${session.session_id}`}>
+                    View Recording
+                  </Link>
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
