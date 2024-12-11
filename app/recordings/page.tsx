@@ -1,15 +1,24 @@
 // app/recordings/page.tsx
 import { RecordingList } from "@/components/app/recording/recording-list";
 
+// Prevent static pre-rendering
+export const dynamic = "force-dynamic";
+
 async function fetchSessions() {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/recording_sessions`
-  );
-  if (!res.ok) {
-    throw new Error("Failed to fetch sessions");
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/recording_sessions`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) {
+      throw new Error(`Failed to fetch sessions: ${res.statusText}`);
+    }
+    const data = await res.json();
+    return data.sessions;
+  } catch (error) {
+    console.error("Error fetching sessions:", error);
+    return [];
   }
-  const data = await res.json();
-  return data.sessions;
 }
 
 export default async function RecordingsPage() {
@@ -20,7 +29,11 @@ export default async function RecordingsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">Session Recordings</h1>
       </div>
-      <RecordingList sessions={sessions} />
+      {sessions.length > 0 ? (
+        <RecordingList sessions={sessions} />
+      ) : (
+        <p className="text-muted-foreground">No recordings found.</p>
+      )}
     </div>
   );
 }
