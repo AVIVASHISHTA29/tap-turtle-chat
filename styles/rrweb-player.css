@@ -1,0 +1,45 @@
+/* Custom styles for rrweb player */
+.rrweb-player-dark {
+  --player-bg-color: #1a1b1e;
+  --player-text-color: #ffffff;
+  --player-border-color: #2d2e32;
+  --player-control-bg: #2d2e32;
+  --player-control-text: #ffffff;
+  --player-slider-color: #4f46e5;
+  --player-slider-hover: #6366f1;
+}
+
+/* Override default rrweb player styles */
+.rr-player {
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.rr-player__frame {
+  background: var(--player-bg-color);
+}
+
+.rr-controller {
+  background: var(--player-control-bg) !important;
+  border-top: 1px solid var(--player-border-color) !important;
+}
+
+.rr-controller__btns button {
+  color: var(--player-control-text) !important;
+}
+
+.rr-controller__btns button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.rr-progress {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.rr-progress__step {
+  background: var(--player-slider-color) !important;
+}
+
+.rr-progress__handler {
+  background: var(--player-slider-hover) !important;
+}

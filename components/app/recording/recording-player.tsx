@@ -4,6 +4,7 @@
 import { useEffect, useRef } from "react";
 
 import { Card } from "@/components/ui/card";
+import "@/styles/rrweb-player.css";
 import rrwebPlayer from "rrweb-player";
 import "rrweb-player/dist/style.css";
 import { eventWithTimeAndPacker } from "rrweb/typings/packer/base";
@@ -14,10 +15,17 @@ interface RecordingPlayerProps {
 
 export function RecordingPlayer({ events }: RecordingPlayerProps) {
   const playerRef = useRef<HTMLDivElement>(null);
+  const playerInstanceRef = useRef<rrwebPlayer | null>(null);
 
   useEffect(() => {
     if (playerRef.current && events && events.length > 0) {
-      new rrwebPlayer({
+      // Cleanup previous instance if it exists
+      if (playerInstanceRef.current) {
+        playerInstanceRef.current.getReplayer().destroy();
+      }
+
+      // Create new player instance
+      playerInstanceRef.current = new rrwebPlayer({
         target: playerRef.current,
         props: {
           events: events as eventWithTimeAndPacker[],
@@ -27,11 +35,18 @@ export function RecordingPlayer({ events }: RecordingPlayerProps) {
         },
       });
     }
+
+    // Cleanup on unmount
+    return () => {
+      if (playerInstanceRef.current) {
+        playerInstanceRef.current.getReplayer().destroy();
+      }
+    };
   }, [events]);
 
   return (
-    <Card className="max-w-[1200px] mx-auto flex justify-center items-center w-fit">
-      <div ref={playerRef} className="w-[1000px] h-[680px]" />
+    <Card className="max-w-[1200px] mx-auto flex justify-center items-center w-fit dark:bg-gray-900">
+      <div ref={playerRef} className="w-[1000px] h-[680px] rrweb-player-dark" />
     </Card>
   );
 }

@@ -13,6 +13,7 @@ const nextConfig = {
         ];
     },
     reactStrictMode: false,
+    transpilePackages: ['rrweb-player'],
 };
 
 export default nextConfig;
