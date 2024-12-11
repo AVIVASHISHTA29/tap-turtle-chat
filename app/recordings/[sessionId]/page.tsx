@@ -2,6 +2,7 @@
 
 import { RecordingPlayer } from "@/components/app/recording/recording-player";
 import { Button } from "@/components/ui/button";
+import "@/styles/rrweb-player.css";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
