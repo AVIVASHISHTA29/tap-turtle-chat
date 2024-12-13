@@ -45,7 +45,7 @@ export function RecordingPlayer({ events }: RecordingPlayerProps) {
   }, [events]);
 
   return (
-    <Card className="max-w-[1200px] mx-auto flex justify-center items-center w-fit dark:bg-gray-900">
+    <Card className="max-w-[1200px] mx-auto flex justify-center items-center w-fit dark:bg-gray-900 border-none">
       <div ref={playerRef} className="w-[1000px] h-[680px] rrweb-player-dark" />
     </Card>
   );

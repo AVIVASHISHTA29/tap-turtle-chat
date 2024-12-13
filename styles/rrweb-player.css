@@ -1,7 +1,7 @@
 /* Custom styles for rrweb player */
 .rrweb-player-dark {
-  --player-bg-color: #1a1b1e;
-  --player-text-color: #ffffff;
+  --player-bg-color: var(--background);
+  --player-text-color: var(--foreground);
   --player-border-color: #2d2e32;
   --player-control-bg: #2d2e32;
   --player-control-text: #ffffff;
@@ -33,7 +33,10 @@
 }
 
 .rr-progress {
+  height: 8px !important;
   background: rgba(255, 255, 255, 0.1) !important;
+  border-top: 2px solid transparent !important;
+  border-bottom: 2px solid transparent !important;
 }
 
 .rr-progress__step {
@@ -42,4 +45,10 @@
 
 .rr-progress__handler {
   background: var(--player-slider-hover) !important;
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.rr-timeline__time {
+  color: #fff !important;
 }

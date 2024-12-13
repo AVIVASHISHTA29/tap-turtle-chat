@@ -1,3 +1,4 @@
+import ProgressProvider from "@/providers/progress-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
@@ -35,7 +36,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <ProgressProvider>{children}</ProgressProvider>
         </ThemeProvider>
       </body>
     </html>
