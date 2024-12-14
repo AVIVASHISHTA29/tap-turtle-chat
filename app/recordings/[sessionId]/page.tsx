@@ -1,5 +1,6 @@
 // app/recordings/[sessionId]/page.tsx
 
+import { RecordingAnalysis } from "@/components/app/recording/recording-analysis";
 import { RecordingPlayer } from "@/components/app/recording/recording-player";
 import { Button } from "@/components/ui/button";
 import "@/styles/rrweb-player.css";
@@ -46,7 +47,11 @@ export default async function RecordingSessionPage({
           Session Recording: {sessionId}
         </h1>
       </div>
-      <RecordingPlayer events={events} />
+
+      <div className="space-y-6">
+        <RecordingPlayer events={events} />
+        <RecordingAnalysis sessionId={sessionId} />
+      </div>
     </div>
   );
 }
