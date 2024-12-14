@@ -1,15 +1,15 @@
 // app/recordings/page.tsx
-import { RecordingList } from "@/components/app/recording/recording-list";
+"use client";
 
-// Prevent static pre-rendering
-export const dynamic = "force-dynamic";
+import { RecordingList } from "@/components/app/recording/recording-list";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 async function fetchSessions() {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/api/recording_sessions`,
-      { cache: "no-store" }
-    );
+    const res = await fetch("/api/recording_sessions", {
+      cache: "no-store",
+    });
     if (!res.ok) {
       throw new Error(`Failed to fetch sessions: ${res.statusText}`);
     }
@@ -21,15 +21,30 @@ async function fetchSessions() {
   }
 }
 
-export default async function RecordingsPage() {
-  const sessions = await fetchSessions();
+export default function RecordingsPage() {
+  const [sessions, setSessions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSessions = async () => {
+      const data = await fetchSessions();
+      setSessions(data);
+      setIsLoading(false);
+    };
+
+    loadSessions();
+  }, []);
 
   return (
     <div className="container mx-auto p-8 max-w-[1400px]">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">Session Recordings</h1>
       </div>
-      {sessions.length > 0 ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : sessions.length > 0 ? (
         <RecordingList sessions={sessions} />
       ) : (
         <p className="text-muted-foreground">No recordings found.</p>
