@@ -37,7 +37,7 @@ export function RecordingAnalysis({ sessionId }: { sessionId: string }) {
 
       {analysis && (
         <div className="mt-4">
-          <MarkdownRenderer content={analysis} />
+          <MarkdownRenderer content={analysis} className="prose md:prose-2xl" />
         </div>
       )}
     </div>
