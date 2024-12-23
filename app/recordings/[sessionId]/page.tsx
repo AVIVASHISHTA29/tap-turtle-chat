@@ -43,12 +43,6 @@ export default async function RecordingSessionPage({
         </Button>
       </div>
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">
-          Session Recording: {sessionId}
-        </h1>
-      </div>
-
       <div className="space-y-6">
         <RecordingPlayer events={events} />
         <SessionSummary sessionId={sessionId} />

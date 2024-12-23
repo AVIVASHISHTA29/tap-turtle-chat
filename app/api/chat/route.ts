@@ -53,11 +53,11 @@ export async function POST(request: Request) {
     // If we have visualization data, send it as a separate message with tool invocation
     // if (visualizationData) {
     return streamText({
-      model: openai("gpt-4o-mini"),
+      model: openai("gpt-4o"),
       system: `
         You're an expert analyst. You've been given an analysis with data for visualisation.
         Create a visualization using the exact data provided and include the analysis.
-        You must use the tools provided to you to create the visualization. Fix the data if necessary - based on the schema of the tools.
+        You must always use the tools provided to you to create the visualization. Fix the data if necessary - based on the schema of the tools and then call the tool invokation.
         `,
       messages: [
         {
