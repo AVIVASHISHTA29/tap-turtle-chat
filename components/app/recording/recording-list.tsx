@@ -1,5 +1,6 @@
 // components/recording-list.tsx
 "use client";
+import DeviceDetector from "device-detector-js";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Link from "next/link";
 
 interface Session {
@@ -25,40 +32,62 @@ interface Session {
 }
 
 export function RecordingList({ sessions }: { sessions: Session[] }) {
+  const deviceDetector = new DeviceDetector();
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Session ID</TableHead>
-            <TableHead>Start Time</TableHead>
-            <TableHead>Page URL</TableHead>
-            <TableHead>Dimensions</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sessions.map((session) => (
-            <TableRow key={session.session_id}>
-              <TableCell className="font-medium">
-                {session.session_id}
-              </TableCell>
-              <TableCell>{session.start_timestamp}</TableCell>
-              <TableCell>{session.page_url}</TableCell>
-              <TableCell>
-                {session.viewport_width} x {session.viewport_height}
-              </TableCell>
-              <TableCell>
-                <Button variant="link" asChild>
-                  <Link href={`/recordings/${session.session_id}`}>
-                    View Recording
-                  </Link>
-                </Button>
-              </TableCell>
+    <TooltipProvider>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Session ID</TableHead>
+              <TableHead>Start Time</TableHead>
+              <TableHead>Page URL</TableHead>
+              <TableHead>User Agent</TableHead>
+              <TableHead>Dimensions</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {sessions.map((session) => (
+              <TableRow key={session.session_id}>
+                <TableCell className="font-medium">
+                  {session.session_id}
+                </TableCell>
+                <TableCell>
+                  {new Date(session.start_timestamp).toLocaleString()}
+                </TableCell>
+                <Tooltip>
+                  <TableCell className="max-w-[200px] truncate">
+                    <TooltipTrigger> {session.page_url}</TooltipTrigger>
+                  </TableCell>
+                  <TooltipContent>{session.page_url}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TableCell className="max-w-[200px] truncate">
+                    <TooltipTrigger className="capitalize">
+                      {
+                        deviceDetector.parse(session?.user_agent ?? "")?.device
+                          ?.type as unknown as string
+                      }
+                    </TooltipTrigger>
+                  </TableCell>
+                  <TooltipContent>{session.user_agent}</TooltipContent>
+                </Tooltip>
+                <TableCell>
+                  {session.viewport_width} x {session.viewport_height}
+                </TableCell>
+                <TableCell>
+                  <Button variant="link" asChild>
+                    <Link href={`/recordings/${session.session_id}`}>
+                      View Recording
+                    </Link>
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </TooltipProvider>
   );
 }

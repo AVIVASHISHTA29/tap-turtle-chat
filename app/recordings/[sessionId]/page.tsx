@@ -2,6 +2,7 @@
 
 import { RecordingAnalysis } from "@/components/app/recording/recording-analysis";
 import { RecordingPlayer } from "@/components/app/recording/recording-player";
+import { SessionSummary } from "@/components/app/recording/session-summary";
 import { Button } from "@/components/ui/button";
 import "@/styles/rrweb-player.css";
 import { ChevronLeft } from "lucide-react";
@@ -50,6 +51,7 @@ export default async function RecordingSessionPage({
 
       <div className="space-y-6">
         <RecordingPlayer events={events} />
+        <SessionSummary sessionId={sessionId} />
         <RecordingAnalysis sessionId={sessionId} />
       </div>
     </div>

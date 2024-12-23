@@ -6,7 +6,8 @@ export async function GET() {
   try {
     const query = await clickhouse.query({
       query: `SELECT session_id, project_id, start_timestamp, end_timestamp, page_url, viewport_width, viewport_height, user_agent, referrer
-              FROM recording_sessions`,
+              FROM recording_sessions
+              ORDER BY start_timestamp DESC`,
       format: "JSONEachRow",
     });
 
