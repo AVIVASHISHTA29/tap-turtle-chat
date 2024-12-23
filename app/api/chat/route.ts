@@ -57,6 +57,7 @@ export async function POST(request: Request) {
       system: `
         You're an expert analyst. You've been given an analysis with data for visualisation.
         Create a visualization using the exact data provided and include the analysis.
+        You must use the tools provided to you to create the visualization. Fix the data if necessary - based on the schema of the tools.
         `,
       messages: [
         {
