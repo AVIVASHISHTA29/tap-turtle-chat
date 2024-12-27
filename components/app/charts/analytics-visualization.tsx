@@ -414,6 +414,11 @@ export function AnalyticsVisualization({
             </svg>
           </Card>
         ))}
+        {analysis && (
+          <div className="mt-4 text-sm text-muted-foreground">
+            <MarkdownRenderer content={analysis} />
+          </div>
+        )}
       </div>
     );
   }
@@ -436,6 +441,11 @@ export function AnalyticsVisualization({
             height={600}
           />
         </div>
+        {analysis && (
+          <div className="mt-4 text-sm text-muted-foreground">
+            <MarkdownRenderer content={analysis} />
+          </div>
+        )}
       </Card>
     );
   }
