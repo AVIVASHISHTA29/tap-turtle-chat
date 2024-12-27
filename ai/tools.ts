@@ -46,6 +46,11 @@ const heatmapDataSchema = z.object({
   value: z.number(),
 });
 
+const sessionListDataSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+});
+
 export const visitorsTrendTool = createTool({
   description: "Visualize visitor trends over time with multiple metrics",
   parameters: z.object({
@@ -154,6 +159,23 @@ export const pageHeatmapTool = createTool({
   },
 });
 
+export const sessionListTool = createTool({
+  description: "List all sessions based on a query",
+  parameters: z.object({
+    data: z.array(sessionListDataSchema),
+    analysis: z.string(),
+  }),
+  execute: async function ({ data, analysis }) {
+    return {
+      type: AnalyticsTool.SESSION_LIST,
+      data,
+      analysis,
+      title: "Session List",
+      isHeatmap: false,
+    };
+  },
+});
+
 export const tools = {
   getVisitorsTrend: visitorsTrendTool,
   getDeviceDistribution: deviceDistributionTool,
@@ -161,4 +183,5 @@ export const tools = {
   getUserEngagement: userEngagementTool,
   getPagePerformance: pagePerformanceTool,
   getPageHeatmap: pageHeatmapTool,
+  getSessionList: sessionListTool,
 };

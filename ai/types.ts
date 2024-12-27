@@ -14,6 +14,7 @@ export enum AnalyticsTool {
   USER_ENGAGEMENT = "user_engagement",
   PAGE_PERFORMANCE = "page_performance",
   PAGE_HEATMAP = "page_heatmap",
+  SESSION_LIST = "session_list",
 }
 
 export interface VisitorTrendData {

@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   Area,
@@ -45,6 +47,7 @@ interface AnalyticsVisualizationProps {
   insight?: string;
   preferredChart?: ChartType;
   isHeatmap?: boolean;
+  isSessionList?: boolean;
 }
 
 const getChartColors = (isDark = true) => ({
@@ -83,10 +86,13 @@ export function AnalyticsVisualization({
   insight,
   preferredChart,
   isHeatmap = false,
+  isSessionList = false,
 }: AnalyticsVisualizationProps) {
   const [selectedChart, setSelectedChart] = useState<ChartType>(
     preferredChart || ChartType.BAR
   );
+
+  const router = useRouter();
 
   const chartColors = getChartColors();
   const colorPalette = generateColorPalette(10);
@@ -364,6 +370,43 @@ export function AnalyticsVisualization({
       </ResponsiveContainer>
     );
   };
+
+  if (isSessionList) {
+    return (
+      <div className="flex flex-col gap-3 p-4">
+        <h4 className="text-base md:text-lg font-semibold text-foreground">
+          Here are a list of sessions based on your query
+        </h4>
+        {data.map((item) => (
+          <Card
+            key={item.id}
+            className={cn(
+              "p-3 transition-colors",
+              "cursor-pointer border-border",
+              "group flex items-center justify-between"
+            )}
+            onClick={() => router.push(`/recordings/${item.id}`)}
+          >
+            <span className="text-sm text-muted-foreground group-hover:text-foreground">
+              {item.text}
+            </span>
+            <svg
+              className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground transition-transform group-hover:translate-x-1"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   if (isHeatmap) {
     return (

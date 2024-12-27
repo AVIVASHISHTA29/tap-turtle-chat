@@ -48,6 +48,7 @@ export function AnalyticsMessage({ message }: AnalyticsMessageProps) {
                 preferredChart={result.preferredChart}
                 isHeatmap={toolInvocation.toolName === "getPageHeatmap"}
                 analysis={result.analysis}
+                isSessionList={toolInvocation.toolName === "getSessionList"}
               />
             );
           }

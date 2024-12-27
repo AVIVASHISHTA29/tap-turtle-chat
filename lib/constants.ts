@@ -4,6 +4,14 @@ export const EXAMPLE_QUERIES = [
     query: "Show me all the clicks and interactions on the website",
   },
   {
+    label: "Top Sessions",
+    query: "Give me top 10 sessions with most user interactions",
+  },
+  {
+    label: "Worst Sessions",
+    query: "Give me top 10 sessions with least user interactions",
+  },
+  {
     label: "Device Usage",
     query: "What devices are people using to access the website?",
   },

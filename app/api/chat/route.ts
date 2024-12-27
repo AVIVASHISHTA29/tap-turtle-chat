@@ -24,54 +24,70 @@ export async function POST(request: Request) {
       const vizMatch = analyticsResponse.match(
         /---VISUALIZATION_DATA---\n```json\n([\s\S]*?)\n```/
       );
+      if (!vizMatch) {
+        // Try without the json code block format
+        const altVizMatch = analyticsResponse.match(
+          /---VISUALIZATION_DATA---\n({[\s\S]*?})\n---ANALYSIS---/
+        );
+        if (altVizMatch) {
+          visualizationData = JSON.parse(altVizMatch[1]);
+        }
+      } else {
+        visualizationData = JSON.parse(vizMatch[1]);
+      }
+
       const analysisMatch = analyticsResponse.match(
         /---ANALYSIS---\n([\s\S]*?)\n---END---/
       );
-
-      if (vizMatch) {
-        visualizationData = JSON.parse(vizMatch[1]);
-      }
       if (analysisMatch) {
         analysis = analysisMatch[1].trim();
       }
     } catch (e) {
       console.error("Error parsing response sections:", e);
+      console.error("Raw response:", analyticsResponse);
     }
 
-    // First, send the analysis as a regular message
-    // const analysisResponse = streamText({
-    //   model: openai("gpt-4o-mini"),
-    //   messages: [
-    //     ...messages,
-    //     {
-    //       role: "assistant",
-    //       content: analysis || "No analysis available.",
-    //     },
-    //   ],
-    // }).toDataStreamResponse();
-
-    // If we have visualization data, send it as a separate message with tool invocation
-    // if (visualizationData) {
-    return streamText({
-      model: openai("gpt-4o"),
-      system: `
+    // If we have visualization data, use it to create a visualization
+    if (visualizationData) {
+      const toolName = visualizationData.type;
+      if (toolName && typeof toolName === "string" && toolName in tools) {
+        return streamText({
+          model: openai("gpt-4o-mini"),
+          system: `
         You're an expert analyst. You've been given an analysis with data for visualisation.
         Create a visualization using the exact data provided and include the analysis.
         You must always use the tools provided to you to create the visualization. Fix the data if necessary - based on the schema of the tools and then call the tool invokation.
         `,
+          messages: [
+            {
+              role: "user",
+              content: `Create visualization using this data: ${JSON.stringify(
+                visualizationData
+              )}. Include this exact analysis: ${analysis}`,
+            },
+          ],
+          tools,
+        }).toDataStreamResponse();
+      }
+    }
+
+    // If no visualization data or invalid tool, just return the analysis
+    return streamText({
+      model: openai("gpt-4o"),
+      system: `
+        You're an expert analyst. You've been given an analysis with maybe some data for visualisation.
+        Create a visualization using the exact data provided and include the analysis.
+        You must always use the tools provided to you to create the visualization. Fix the data if necessary - based on the schema of the tools and then call the tool invokation.
+        `,
       messages: [
+        ...messages,
         {
-          role: "user",
-          content: `Create visualization using this data: ${JSON.stringify(
-            visualizationData
-          )}. Include this exact analysis: ${analysis}`,
+          role: "assistant",
+          content: analyticsResponse || "No analysis available.",
         },
       ],
       tools,
     }).toDataStreamResponse();
-    // }
-
-    // return analysisResponse;
   } catch (error) {
     console.error("Chat API error:", error);
     return new NextResponse(
