@@ -1,7 +1,8 @@
 export const EXAMPLE_QUERIES = [
   {
     label: "Clicks Analysis",
-    query: "Show me all the clicks and interactions on the website",
+    query:
+      "Give me the top 10 most clicked elements on the website as a bar chart.",
   },
   {
     label: "Top Sessions",

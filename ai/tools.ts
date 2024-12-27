@@ -48,7 +48,8 @@ const heatmapDataSchema = z.object({
 
 const sessionListDataSchema = z.object({
   id: z.string(),
-  text: z.string(),
+  heading: z.string(),
+  subHeading: z.string(),
 });
 
 export const visitorsTrendTool = createTool({

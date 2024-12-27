@@ -228,11 +228,12 @@ export const initLangChainDB = async () => {
     OPTIMIZATION RULES:
     1. Always include WHERE clauses for date ranges
     2. Use appropriate aggregation functions
-    3. Avoid SELECT * or returning raw events
+    3. Always avoid SELECT * or returning raw events
     4. Limit result sets to meaningful samples
     5. Use materialized views for common aggregations
     6. Include LIMIT clauses for exploratory queries
     7. Use approximate functions for high-cardinality data (uniqHLL instead of uniqExact)
+    8. Always make sure to make the most efficient query as possible - and reduce context length as much as possible
 
     Write an efficient SQL query that provides aggregated analytics. Use ClickHouse SQL syntax.
     If multiple queries are needed, separate them with semicolons.

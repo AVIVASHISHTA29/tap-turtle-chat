@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   Area,
@@ -91,8 +90,6 @@ export function AnalyticsVisualization({
   const [selectedChart, setSelectedChart] = useState<ChartType>(
     preferredChart || ChartType.BAR
   );
-
-  const router = useRouter();
 
   const chartColors = getChartColors();
   const colorPalette = generateColorPalette(10);
@@ -237,7 +234,10 @@ export function AnalyticsVisualization({
                 tickMargin={30}
               />
               <YAxis {...commonAxisProps} width={50} />
-              <Tooltip {...commonTooltipProps} />
+              <Tooltip
+                {...commonTooltipProps}
+                cursor={{ fill: "rgba(255, 255, 255, 0.1)" }}
+              />
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke={chartColors.border}
@@ -385,11 +385,21 @@ export function AnalyticsVisualization({
               "cursor-pointer border-border",
               "group flex items-center justify-between"
             )}
-            onClick={() => router.push(`/recordings/${item.id}`)}
+            onClick={() =>
+              window.open(
+                `${process.env.NEXT_PUBLIC_BASE_URL}/recordings/${item.id}`,
+                "_blank"
+              )
+            }
           >
-            <span className="text-sm text-muted-foreground group-hover:text-foreground">
-              {item.text}
-            </span>
+            <div className="flex flex-col gap-1">
+              <span className="text-sm text-muted-foreground group-hover:text-foreground">
+                {item.heading}
+              </span>
+              <span className="text-xs text-muted-foreground group-hover:text-foreground">
+                {item.subHeading}
+              </span>
+            </div>
             <svg
               className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground transition-transform group-hover:translate-x-1"
               xmlns="http://www.w3.org/2000/svg"
