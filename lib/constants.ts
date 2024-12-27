@@ -1,5 +1,10 @@
 export const EXAMPLE_QUERIES = [
   {
+    label: "User Engagement",
+    query:
+      "Show me all the user interactions on the website by event and session",
+  },
+  {
     label: "Clicks Analysis",
     query:
       "Give me the top 10 most clicked elements on the website as a bar chart.",
@@ -19,11 +24,6 @@ export const EXAMPLE_QUERIES = [
   {
     label: "Browser Stats",
     query: "Show me the browser usage statistics",
-  },
-  {
-    label: "User Engagement",
-    query:
-      "Show me all the user interactions on the website by event and session",
   },
   {
     label: "Page Performance",
