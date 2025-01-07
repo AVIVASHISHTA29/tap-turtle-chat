@@ -76,14 +76,8 @@ export async function POST(request: Request) {
         query: `
           INSERT INTO users
           (user_id, email, name)
-          VALUES
-          ({user_id:String}, {email:String}, {name:String})
+          VALUES ('${id}', '${primaryEmail || ""}', '${fullName || ""}')
         `,
-        query_params: {
-          user_id: id,
-          email: primaryEmail || "",
-          name: fullName || "",
-        },
       });
 
       console.log("User created successfully in ClickHouse");
