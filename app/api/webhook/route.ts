@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 
-async function handler(request: Request) {
+export async function POST(request: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
   if (!WEBHOOK_SECRET) {
@@ -107,5 +107,3 @@ async function handler(request: Request) {
 
   return NextResponse.json({ message: "Webhook processed successfully" });
 }
-
-export const POST = handler;
