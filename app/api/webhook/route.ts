@@ -4,9 +4,16 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 
-function formatDateForClickHouse(date: Date | string): string {
-  const d = new Date(date);
-  return d.toISOString().slice(0, 19).replace("T", " ");
+function formatDateForClickHouse(timestamp: number): string {
+  const date = new Date(timestamp * 1000); // Convert Unix timestamp to milliseconds
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+  const seconds = String(date.getUTCSeconds()).padStart(2, "0");
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 export async function POST(request: Request) {
@@ -69,7 +76,9 @@ export async function POST(request: Request) {
     const { id, email_addresses, first_name, last_name, created_at } = evt.data;
     const primaryEmail = email_addresses[0]?.email_address;
     const fullName = [first_name, last_name].filter(Boolean).join(" ");
-    const formattedDate = formatDateForClickHouse(created_at.toString());
+
+    // created_at from Clerk is a Unix timestamp in seconds
+    const formattedDate = formatDateForClickHouse(created_at);
 
     try {
       console.log("Creating user in ClickHouse:", {
