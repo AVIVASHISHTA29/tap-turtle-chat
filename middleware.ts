@@ -1,44 +1,23 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const allowedOrigins = ["*"];
+const isPublicRoute = createRouteMatcher([
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/api/events(.*)",
+  "/api/recording(.*)",
+]);
 
-export function middleware(req: NextRequest) {
-  const origin = req.headers.get("origin");
-
-  if (origin && allowedOrigins.includes(origin)) {
-    const response = NextResponse.next();
-    response.headers.set("Access-Control-Allow-Origin", origin);
-    response.headers.set(
-      "Access-Control-Allow-Methods",
-      "GET, POST, OPTIONS, PUT, DELETE"
-    );
-    response.headers.set(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Content-Encoding"
-    );
-    response.headers.set("Access-Control-Max-Age", "86400");
-    return response;
+export default clerkMiddleware(async (auth, request) => {
+  if (!isPublicRoute(request)) {
+    await auth.protect();
   }
-
-  if (req.method === "OPTIONS") {
-    const response = new NextResponse(null, { status: 204 });
-    response.headers.set("Access-Control-Allow-Origin", origin || "*");
-    response.headers.set(
-      "Access-Control-Allow-Methods",
-      "GET, POST, OPTIONS, PUT, DELETE"
-    );
-    response.headers.set(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Content-Encoding"
-    );
-    response.headers.set("Access-Control-Max-Age", "86400");
-    return response;
-  }
-
-  return NextResponse.next();
-}
+});
 
 export const config = {
-  matcher: "/api/:path*",
+  matcher: [
+    // Skip Next.js internals and all static files, unless found in search params
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // Always run for API routes
+    "/(api|trpc)(.*)",
+  ],
 };
