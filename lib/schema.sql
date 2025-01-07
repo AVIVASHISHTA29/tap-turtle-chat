@@ -7,6 +7,9 @@ CREATE TABLE IF NOT EXISTS projects (
 ENGINE = MergeTree()
 ORDER BY (project_id);
 
+-- Modify projects table to add DEFAULT now() to created_at
+ALTER TABLE projects MODIFY COLUMN created_at DateTime DEFAULT now();
+
 CREATE TABLE IF NOT EXISTS sessions (
     session_id UUID,          -- Unique session identifier
     project_id UUID,          -- Link to project
@@ -63,7 +66,7 @@ ORDER BY (project_id, session_id, timestamp);
 CREATE TABLE IF NOT EXISTS users (
     user_id String,           -- Clerk user ID
     email String,            -- User's email
-    created_at DateTime,     -- When the user was created
+    created_at DateTime DEFAULT now(),     -- When the user was created
     name String             -- User's full name
 )
 ENGINE = MergeTree()
@@ -74,7 +77,10 @@ CREATE TABLE IF NOT EXISTS user_projects (
     user_id String,          -- Clerk user ID
     project_id UUID,         -- Link to project
     role Enum8('owner' = 1, 'member' = 2),  -- User's role in the project
-    created_at DateTime      -- When the user was added to the project
+    created_at DateTime DEFAULT now()        -- When the user was added to the project
 )
 ENGINE = MergeTree()
-ORDER BY (user_id, project_id); 
+ORDER BY (user_id, project_id);
+
+-- Modify user_projects table to add DEFAULT now() to created_at
+ALTER TABLE user_projects MODIFY COLUMN created_at DateTime DEFAULT now(); 
