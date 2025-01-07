@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 export async function GET() {
   try {
     const { userId } = await auth();
+    console.log("userId", userId);
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -15,12 +16,10 @@ export async function GET() {
         SELECT p.*
         FROM projects p
         JOIN user_projects up ON p.project_id = up.project_id
-        WHERE up.user_id = {userId:String}
+        WHERE up.user_id = '${userId}'
         ORDER BY p.created_at DESC
       `,
-      query_params: {
-        userId,
-      },
+      format: "JSONEachRow",
     });
 
     const data = await result.json();
