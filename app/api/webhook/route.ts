@@ -4,6 +4,11 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 
+function formatDateForClickHouse(date: Date | string): string {
+  const d = new Date(date);
+  return d.toISOString().slice(0, 19).replace("T", " ");
+}
+
 export async function POST(request: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
@@ -64,12 +69,14 @@ export async function POST(request: Request) {
     const { id, email_addresses, first_name, last_name, created_at } = evt.data;
     const primaryEmail = email_addresses[0]?.email_address;
     const fullName = [first_name, last_name].filter(Boolean).join(" ");
+    const formattedDate = formatDateForClickHouse(created_at.toString());
 
     try {
       console.log("Creating user in ClickHouse:", {
         user_id: id,
         email: primaryEmail,
         name: fullName,
+        created_at: formattedDate,
       });
 
       await clickhouse.query({
@@ -77,12 +84,12 @@ export async function POST(request: Request) {
           INSERT INTO users
           (user_id, email, created_at, name)
           VALUES
-          ({user_id:String}, {email:String}, {created_at:DateTime}, {name:String})
+          ({user_id:String}, {email:String}, {created_at:String}, {name:String})
         `,
         query_params: {
           user_id: id,
           email: primaryEmail || "",
-          created_at: new Date(created_at).toISOString(),
+          created_at: formattedDate,
           name: fullName || "",
         },
       });
