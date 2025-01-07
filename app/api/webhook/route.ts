@@ -72,12 +72,16 @@ export async function POST(request: Request) {
         name: fullName,
       });
 
-      await clickhouse.query({
-        query: `
-          INSERT INTO users
-          (user_id, email, name)
-          VALUES ('${id}', '${primaryEmail || ""}', '${fullName || ""}')
-        `,
+      await clickhouse.insert({
+        table: "users",
+        values: [
+          {
+            user_id: id,
+            email: primaryEmail || "",
+            name: fullName || "",
+          },
+        ],
+        format: "JSONEachRow",
       });
 
       console.log("User created successfully in ClickHouse");
