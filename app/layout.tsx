@@ -1,12 +1,7 @@
 import ProgressProvider from "@/providers/progress-provider";
+import StoreProvider from "@/providers/store-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
-import {
-  ClerkProvider,
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  UserButton,
-} from "@clerk/nextjs";
+import { ClerkProvider, SignedIn, UserButton } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -44,15 +39,14 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <ProgressProvider>
-              <SignedOut>
-                <SignInButton />
-              </SignedOut>
-              <SignedIn>
-                <UserButton />
-              </SignedIn>
-              {children}
-            </ProgressProvider>
+            <StoreProvider>
+              <ProgressProvider>
+                <SignedIn>
+                  <UserButton />
+                </SignedIn>
+                {children}
+              </ProgressProvider>
+            </StoreProvider>
           </ThemeProvider>
         </body>
       </html>

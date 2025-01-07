@@ -1,9 +1,10 @@
 import { createClient } from "@clickhouse/client";
 
 const clickhouse = createClient({
-  url: `${process.env.NEXT_PUBLIC_CLICKHOUSE_HOST}:${process.env.NEXT_PUBLIC_CLICKHOUSE_PORT}`,
+  host: process.env.NEXT_PUBLIC_CLICKHOUSE_HOST,
   username: process.env.NEXT_PUBLIC_CLICKHOUSE_USER!,
   password: process.env.NEXT_PUBLIC_CLICKHOUSE_PASSWORD!,
+  database: process.env.NEXT_PUBLIC_CLICKHOUSE_DB!,
 });
 
 export default clickhouse;

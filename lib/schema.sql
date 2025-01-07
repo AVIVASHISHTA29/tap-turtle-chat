@@ -1,0 +1,80 @@
+CREATE TABLE IF NOT EXISTS projects (
+    project_id UUID,          -- Unique project identifier
+    api_key String,           -- API key for authentication
+    project_name String,      -- Friendly name for the project
+    created_at DateTime       -- Timestamp for project creation
+)
+ENGINE = MergeTree()
+ORDER BY (project_id);
+
+CREATE TABLE IF NOT EXISTS sessions (
+    session_id UUID,          -- Unique session identifier
+    project_id UUID,          -- Link to project
+    timestamp_start DateTime, -- When the session started
+    page_url String,          -- URL of the session
+    viewport_width UInt16,    -- Browser width
+    viewport_height UInt16    -- Browser height
+)
+ENGINE = MergeTree()
+ORDER BY (project_id, session_id);
+
+
+CREATE TABLE IF NOT EXISTS events (
+    event_id UUID,                -- Unique event identifier
+    session_id UUID,              -- Link to session
+    project_id UUID,              -- Link to project
+    timestamp DateTime,           -- Event timestamp
+    event_type Enum8('click' = 1, 'scroll' = 2, 'mousemove' = 3, 'dom_load' = 4, 'dom_unload' = 5), -- Event type
+    element_id Nullable(String),  -- DOM element ID
+    css_selector Nullable(String),-- Full CSS selector
+    x_position Nullable(Float32), -- X-coordinate of the event
+    y_position Nullable(Float32), -- Y-coordinate of the event
+    metadata Nullable(String)     -- Additional data (e.g., JSON string)
+)
+ENGINE = MergeTree()
+ORDER BY (project_id, session_id, timestamp);
+
+CREATE TABLE IF NOT EXISTS recording_sessions (
+    session_id UUID,          -- Unique session identifier
+    project_id UUID,          -- Link to project
+    start_timestamp DateTime, -- When the recording started
+    end_timestamp Nullable(DateTime),  -- When the recording ended (if known)
+    page_url String,          -- URL of the recorded page
+    viewport_width UInt16,    -- Browser width
+    viewport_height UInt16,   -- Browser height
+    user_agent Nullable(String),
+    referrer Nullable(String)
+)
+ENGINE = MergeTree()
+ORDER BY (project_id, session_id);
+
+
+CREATE TABLE IF NOT EXISTS recording_events (
+    event_id UUID,                     -- Unique event identifier
+    session_id UUID,                   -- Link to session
+    project_id UUID,                   -- Link to project
+    timestamp DateTime,                -- Event timestamp
+    event_type Enum8('dom_snapshot' = 1, 'mutation' = 2, 'interaction' = 3),
+    rrweb_data String                  -- Raw rrweb event data (JSON string)
+)
+ENGINE = MergeTree()
+ORDER BY (project_id, session_id, timestamp);
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id String,           -- Clerk user ID
+    email String,            -- User's email
+    created_at DateTime,     -- When the user was created
+    name String             -- User's full name
+)
+ENGINE = MergeTree()
+ORDER BY user_id;
+
+-- Add user_id to projects table to link projects with users
+CREATE TABLE IF NOT EXISTS user_projects (
+    user_id String,          -- Clerk user ID
+    project_id UUID,         -- Link to project
+    role Enum8('owner' = 1, 'member' = 2),  -- User's role in the project
+    created_at DateTime      -- When the user was added to the project
+)
+ENGINE = MergeTree()
+ORDER BY (user_id, project_id); 
