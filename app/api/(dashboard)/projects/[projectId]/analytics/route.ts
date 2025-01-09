@@ -1,6 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import clickhouse from "@/lib/clickhouse";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+
+interface RecordingStats {
+  total_recordings: string;
+  avg_duration: string;
+  total_interactions: string;
+  duration_distribution: Array<[string, string]>;
+}
 
 export async function GET(
   req: Request,
@@ -177,6 +185,83 @@ export async function GET(
       format: "JSONEachRow",
     });
 
+    // Get recording analytics
+    const recordingAnalyticsResult = await clickhouse.query({
+      query: `
+        WITH 
+          recording_durations AS (
+            SELECT
+              session_id,
+              dateDiff('second', min(start_timestamp), max(coalesce(end_timestamp, now()))) as duration
+            FROM recording_sessions
+            WHERE project_id = {projectId:String}
+            GROUP BY session_id
+          ),
+          duration_ranges AS (
+            SELECT
+              multiIf(
+                duration < 60, '< 1 min',
+                duration < 300, '1-5 mins',
+                duration < 900, '5-15 mins',
+                duration < 1800, '15-30 mins',
+                '> 30 mins'
+              ) as duration_range,
+              count(*) as count
+            FROM recording_durations
+            GROUP BY duration_range
+            ORDER BY 
+              multiIf(
+                duration_range = '< 1 min', 1,
+                duration_range = '1-5 mins', 2,
+                duration_range = '5-15 mins', 3,
+                duration_range = '15-30 mins', 4,
+                5
+              )
+          ),
+          interaction_stats AS (
+            SELECT
+              rs.session_id,
+              count(re.event_id) as interaction_count
+            FROM recording_sessions rs
+            LEFT JOIN recording_events re ON rs.session_id = re.session_id
+            WHERE rs.project_id = {projectId:String}
+            AND re.event_type = 3  -- interaction events
+            GROUP BY rs.session_id
+          ),
+          duration_stats AS (
+            SELECT
+              count(DISTINCT rs.session_id) as total_recordings,
+              avg(rd.duration) as avg_duration,
+              sum(is.interaction_count) as total_interactions
+            FROM recording_sessions rs
+            LEFT JOIN recording_durations rd ON rs.session_id = rd.session_id
+            LEFT JOIN interaction_stats is ON rs.session_id = is.session_id
+            WHERE rs.project_id = {projectId:String}
+          )
+        SELECT
+          ds.*,
+          arrayMap(x -> tuple(x.1, x.2), 
+            arraySort(x -> multiIf(
+              x.1 = '< 1 min', 1,
+              x.1 = '1-5 mins', 2,
+              x.1 = '5-15 mins', 3,
+              x.1 = '15-30 mins', 4,
+              5
+            ), groupArray((duration_range, count)))
+          ) as duration_distribution
+        FROM duration_stats ds
+        CROSS JOIN duration_ranges
+        GROUP BY 
+          ds.total_recordings,
+          ds.avg_duration,
+          ds.total_interactions
+      `,
+      query_params: {
+        projectId,
+      },
+      format: "JSONEachRow",
+    });
+
     const [
       events,
       timeSeries,
@@ -185,6 +270,7 @@ export async function GET(
       browsers,
       pageViews,
       hourlyPattern,
+      recordingAnalytics,
     ] = await Promise.all([
       eventsResult.json(),
       timeSeriesResult.json(),
@@ -193,7 +279,23 @@ export async function GET(
       browserResult.json(),
       pageViewsResult.json(),
       hourlyPatternResult.json(),
+      recordingAnalyticsResult.json(),
     ]);
+
+    // Process recording analytics
+    const recordingStats = (recordingAnalytics[0] || {
+      total_recordings: "0",
+      avg_duration: "0",
+      total_interactions: "0",
+      duration_distribution: [],
+    }) as RecordingStats;
+
+    // Convert duration distribution array to proper format
+    const durationDistribution =
+      recordingStats.duration_distribution?.map(([range, count]) => ({
+        duration_range: range,
+        count: Number(count),
+      })) || [];
 
     return NextResponse.json({
       events,
@@ -203,6 +305,12 @@ export async function GET(
       browsers,
       pageViews,
       hourlyPattern,
+      recordings: {
+        total: Number(recordingStats.total_recordings),
+        avgDuration: Number(recordingStats.avg_duration),
+        totalInteractions: Number(recordingStats.total_interactions),
+        durationDistribution,
+      },
     });
   } catch (error) {
     console.error("Error fetching analytics:", error);
