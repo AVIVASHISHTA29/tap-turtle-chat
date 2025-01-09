@@ -17,6 +17,7 @@ import {
   ArrowUp,
   Clock,
   Info,
+  Loader2,
   Monitor,
   MousePointer,
   PieChart as PieChartIcon,
@@ -135,14 +136,6 @@ function formatDuration(seconds: number | null): string {
   const minutes = Math.floor(seconds / 60);
   if (minutes < 1) return "< 1 min";
   return `${minutes} min${minutes > 1 ? "s" : ""}`;
-}
-
-function LoadingSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="h-4 w-4 animate-spin border-2 border-primary border-t-transparent rounded-full" />
-    </div>
-  );
 }
 
 // Add new color constants
@@ -274,8 +267,8 @@ export default function Page() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <LoadingSkeleton />
+      <div className="flex items-center justify-center h-screen w-full">
+        <Loader2 className="animate-spin size-6" />
       </div>
     );
   }

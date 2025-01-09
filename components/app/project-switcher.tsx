@@ -15,7 +15,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Project, useGetProjectsQuery } from "@/redux/features/projects/api";
+import { Project } from "@/redux/features/projects/api";
 import { setSelectedProject } from "@/redux/features/projects/slice";
 import { RootState } from "@/redux/store";
 import { useEffect } from "react";
@@ -25,13 +25,9 @@ import { useDispatch, useSelector } from "react-redux";
 
 export function ProjectSwitcher() {
   const { isMobile } = useSidebar();
-  const selectedProject = useSelector(
-    (state: RootState) => state.projects.selectedProject
+  const { selectedProject, projects, loading } = useSelector(
+    (state: RootState) => state.projects
   );
-
-  const { data } = useGetProjectsQuery();
-
-  const projects = data || [];
 
   const dispatch = useDispatch();
 
@@ -49,7 +45,7 @@ export function ProjectSwitcher() {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger asChild disabled={loading}>
             <SidebarMenuButton
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
