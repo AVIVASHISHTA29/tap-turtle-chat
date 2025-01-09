@@ -1,3 +1,5 @@
+"use client";
+
 import DashboardLayout from "@/layouts/dashboard";
 import React from "react";
 

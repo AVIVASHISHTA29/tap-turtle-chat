@@ -1,6 +1,6 @@
 "use client";
 
-import { store } from "@/lib/store/store";
+import { store } from "@/redux/store";
 import { Provider } from "react-redux";
 
 export default function StoreProvider({

@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { authenticatedBaseQuery } from "../../app/baseQueries";
 
 export interface Project {
   project_id: string;
@@ -11,12 +12,9 @@ export interface CreateProjectRequest {
   project_name: string;
 }
 
-export const api = createApi({
-  reducerPath: "api",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/",
-    credentials: "include",
-  }),
+export const projectsApi = createApi({
+  reducerPath: "projectsApi",
+  baseQuery: authenticatedBaseQuery,
   tagTypes: ["Project"],
   endpoints: (builder) => ({
     getProjects: builder.query<Project[], void>({
@@ -34,4 +32,4 @@ export const api = createApi({
   }),
 });
 
-export const { useGetProjectsQuery, useCreateProjectMutation } = api;
+export const { useGetProjectsQuery, useCreateProjectMutation } = projectsApi;

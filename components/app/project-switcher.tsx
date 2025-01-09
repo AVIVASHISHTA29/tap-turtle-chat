@@ -15,20 +15,35 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Project, useGetProjectsQuery } from "@/lib/store/api";
+import { Project, useGetProjectsQuery } from "@/redux/features/projects/api";
+import { setSelectedProject } from "@/redux/features/projects/slice";
+import { RootState } from "@/redux/store";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 // This is sample data.
 
 export function ProjectSwitcher() {
   const { isMobile } = useSidebar();
+  const selectedProject = useSelector(
+    (state: RootState) => state.projects.selectedProject
+  );
 
   const { data } = useGetProjectsQuery();
 
   const projects = data || [];
 
+  const dispatch = useDispatch();
+
   const handleActiveProject = (project: Project) => {
-    console.log(project);
+    dispatch(setSelectedProject(project));
   };
+
+  useEffect(() => {
+    if (projects.length > 0) {
+      dispatch(setSelectedProject(projects[0]));
+    }
+  }, [projects]);
 
   return (
     <SidebarMenu>
@@ -44,7 +59,7 @@ export function ProjectSwitcher() {
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {"Select Project"}
+                  {selectedProject?.project_name || "Select Project"}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
