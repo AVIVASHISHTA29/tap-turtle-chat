@@ -18,7 +18,7 @@ export interface RecordingEvent {
   event_type: number;
 }
 
-export interface SessionSummary {
+export interface SessionSummaryData {
   session: {
     session_id: string;
     project_id: string;
@@ -83,7 +83,7 @@ export const recordingsApi = createApi({
       }),
     }),
     getSessionSummary: builder.query<
-      SessionSummary,
+      SessionSummaryData,
       { projectId: string; sessionId: string }
     >({
       query: ({ projectId, sessionId }) => ({
@@ -95,7 +95,7 @@ export const recordingsApi = createApi({
       { projectId: string; sessionId: string }
     >({
       query: ({ projectId, sessionId }) => ({
-        url: `/api/projects/${projectId}/recordings/${sessionId}/analysis`,
+        url: `/api/recording_analysis/${projectId}/${sessionId}`,
       }),
     }),
   }),
