@@ -13,7 +13,7 @@ import {
   Project,
   useCreateProjectMutation,
   useGetProjectsQuery,
-} from "@/redux/app/api";
+} from "@/redux/features/projects/api";
 import { useState } from "react";
 
 export default function ProjectsPage() {
