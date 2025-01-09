@@ -3,15 +3,13 @@
 import { RecordingAnalysis } from "@/components/app/recording/recording-analysis";
 import { RecordingPlayer } from "@/components/app/recording/recording-player";
 import { SessionSummary } from "@/components/app/recording/session-summary";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useGetRecordingEventsQuery,
   useGetSessionSummaryQuery,
 } from "@/redux/features/recordings/api";
 import { RootState } from "@/redux/store";
-import { ChevronLeft, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { useSelector } from "react-redux";
@@ -63,17 +61,8 @@ export default function RecordingSessionPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="max-w-[1400px] mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <Link href="/recordings">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ChevronLeft className="h-4 w-4" />
-              All Recordings
-            </Button>
-          </Link>
-        </div>
-
+    <div className="py-6">
+      <div className="max-w-[800px] mx-auto space-y-6">
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}

@@ -46,7 +46,7 @@ export function ChatInterface() {
   };
 
   return (
-    <Card className="w-full h-full flex flex-col max-h-screen p-0 rounded-none">
+    <Card className="w-full h-full flex flex-col max-h-screen p-0 rounded-none border-0">
       <div className="flex flex-col h-full">
         <ScrollArea className="flex-1 p-2 md:p-4">
           {messages.length === 0 && (

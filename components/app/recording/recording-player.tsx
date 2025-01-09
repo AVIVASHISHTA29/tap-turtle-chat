@@ -31,7 +31,7 @@ export function RecordingPlayer({ events }: RecordingPlayerProps) {
           events: events as eventWithTimeAndPacker[],
           autoPlay: false,
           height: 600,
-          width: 1000,
+          width: 800,
         },
       });
     }
@@ -45,8 +45,8 @@ export function RecordingPlayer({ events }: RecordingPlayerProps) {
   }, [events]);
 
   return (
-    <Card className="max-w-[1200px] mx-auto flex justify-center items-center w-fit dark:bg-gray-900 border-none">
-      <div ref={playerRef} className="w-[1000px] h-[680px] rrweb-player-dark" />
+    <Card className="max-w-[800px] mx-auto flex justify-center items-center w-fit dark:bg-gray-900 border-none">
+      <div ref={playerRef} className="w-[800px] h-[500px] rrweb-player-dark" />
     </Card>
   );
 }

@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useSidebar } from "@/components/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
@@ -29,6 +30,7 @@ export default function RecordingsLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { state } = useSidebar();
   const selectedProject = useSelector(
     (state: RootState) => state.projects.selectedProject
   );
@@ -52,7 +54,13 @@ export default function RecordingsLayout({
   }
 
   return (
-    <div className="flex h-full max-h-screen">
+    <div
+      className={`flex h-full  ${
+        state === "expanded"
+          ? "max-h-[calc(100vh-70px)]"
+          : "max-h-[calc(100vh-55px)]"
+      }`}
+    >
       <div className="w-80 border-r border-border bg-card">
         <ScrollArea className="h-full max-h-full">
           {isLoading ? (
@@ -60,14 +68,14 @@ export default function RecordingsLayout({
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <div className="p-4 space-y-2">
+            <div className="p-4 space-y-2 gap-2">
               {sessions?.map((session) => (
                 <Link
                   key={session.session_id}
                   href={`/recordings/${session.session_id}`}
                 >
                   <Card
-                    className={`p-4 hover:bg-accent transition-colors cursor-pointer ${
+                    className={`p-4 hover:bg-accent transition-colors cursor-pointer mb-4 ${
                       pathname === `/recordings/${session.session_id}`
                         ? "bg-accent"
                         : ""

@@ -1,7 +1,9 @@
 "use client";
 
 import { AppSidebar } from "@/components/app/app-sidebar";
+import { AppTopbar } from "@/components/app/app-topbar";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { useGetProjectsQuery } from "@/redux/features/projects/api";
 import { setLoading, setProjects } from "@/redux/features/projects/slice";
 import { Loader2 } from "lucide-react";
@@ -23,21 +25,26 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
         dispatch(setProjects([]));
       }
     }
-  }, [data, isLoading]);
+  }, [data, isLoading, dispatch]);
 
   return (
-    <>
-      <SidebarProvider>
-        <AppSidebar />
-        {isLoading ? (
-          <div className="flex items-center justify-center h-screen w-full">
-            <Loader2 className="animate-spin size-6" />
-          </div>
-        ) : (
-          <main className="w-full">{children}</main>
-        )}
-      </SidebarProvider>
-    </>
+    <SidebarProvider>
+      <div className="relative flex min-h-screen w-full">
+        <AppSidebar className="fixed inset-y-0 z-50" />
+        <div className="flex flex-1 flex-col w-full">
+          <AppTopbar />
+          {isLoading ? (
+            <div className="flex flex-1 items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : (
+            <main className={cn("flex-1 space-y-4 md:p-8 pt-2")}>
+              {children}
+            </main>
+          )}
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }
 

@@ -5,7 +5,6 @@ import { Bot, House, Ticket, Video } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarHeader,
@@ -16,7 +15,6 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 
-import { SignedIn, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { ProjectSwitcher } from "./project-switcher";
 
@@ -73,11 +71,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
         <SidebarSeparator />
       </SidebarContent>
-      <SidebarFooter>
+      {/* <SidebarFooter>
         <SignedIn>
           <UserButton />
         </SignedIn>
-      </SidebarFooter>
+      </SidebarFooter> */}
       <SidebarRail />
     </Sidebar>
   );
