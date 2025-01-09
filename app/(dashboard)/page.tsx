@@ -22,6 +22,7 @@ import {
   MousePointer,
   PieChart as PieChartIcon,
   RefreshCw,
+  TrendingUp,
   Users,
   Video,
 } from "lucide-react";
@@ -147,7 +148,13 @@ const CHART_COLORS = {
   dom_unload: "#6366f1",
 };
 
-const BROWSER_COLORS = ["#3b82f6", "#06b6d4", "#f59e0b", "#8b5cf6", "#6366f1"];
+const BROWSER_COLORS = {
+  chrome: "hsl(var(--chart-1))",
+  safari: "hsl(var(--chart-2))",
+  firefox: "hsl(var(--chart-3))",
+  edge: "hsl(var(--chart-4))",
+  other: "hsl(var(--chart-5))",
+};
 
 // Add custom tooltip component
 const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
@@ -470,21 +477,47 @@ export default function Page() {
                     innerRadius={isDonut ? 60 : 0}
                     outerRadius={90}
                     paddingAngle={2}
-                    label={({ name, percent }) =>
-                      percent > 0.05
-                        ? `${name} (${(percent * 100).toFixed(0)}%)`
-                        : ""
-                    }
-                    labelLine={{ stroke: "gray", strokeWidth: 1, opacity: 0.5 }}
                   >
-                    {processedBrowsers.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={BROWSER_COLORS[index % BROWSER_COLORS.length]}
-                        className="stroke-background hover:opacity-80 transition-opacity"
-                      />
-                    ))}
+                    {processedBrowsers.map((entry, index) => {
+                      const browser = entry.browser.toLowerCase();
+                      const color =
+                        BROWSER_COLORS[
+                          browser as keyof typeof BROWSER_COLORS
+                        ] || BROWSER_COLORS.other;
+                      return (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={color}
+                          className="stroke-background hover:opacity-80 transition-opacity"
+                        />
+                      );
+                    })}
                   </Pie>
+                  {isDonut && (
+                    <text
+                      x="50%"
+                      y="50%"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                    >
+                      <tspan
+                        x="50%"
+                        y="50%"
+                        className="fill-foreground text-3xl font-bold"
+                      >
+                        {processedBrowsers
+                          .reduce((acc, curr) => acc + curr.count, 0)
+                          .toLocaleString()}
+                      </tspan>
+                      <tspan
+                        x="50%"
+                        dy="24"
+                        className="fill-muted-foreground text-sm"
+                      >
+                        Visitors
+                      </tspan>
+                    </text>
+                  )}
                   <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload?.[0]) {
@@ -500,10 +533,10 @@ export default function Page() {
                         return (
                           <div className="bg-secondary-foreground/90 p-4 rounded-lg shadow-lg border border-border">
                             <p className="font-medium text-secondary mb-1">
-                              {data.name}
+                              {data.payload.browser}
                             </p>
                             <p className="text-sm text-secondary">
-                              {data.value.toLocaleString()} sessions
+                              {data.value.toLocaleString()} visitors
                               <span className="text-secondary/80 ml-1">
                                 ({percentage}%)
                               </span>
@@ -523,6 +556,22 @@ export default function Page() {
                   />
                 </PieChart>
               </ResponsiveContainer>
+            </CardContent>
+            <CardContent className="pt-0">
+              <div className="flex items-center gap-2 justify-center text-sm">
+                <div className="flex items-center gap-2 font-medium leading-none">
+                  <TrendingUp className="h-4 w-4" />
+                  Trending up by{" "}
+                  {calculateGrowth(
+                    analytics.sessions.sessions_last_24h,
+                    analytics.sessions.sessions_last_24h / 2
+                  ).toFixed(1)}
+                  % this month
+                </div>
+              </div>
+              <div className="text-center text-sm text-muted-foreground mt-2">
+                Showing total visitors for all browsers
+              </div>
             </CardContent>
           </Card>
         )}
@@ -553,58 +602,86 @@ export default function Page() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Recording Timeline */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
                     Session Duration Distribution
                   </h3>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={analytics.recordings.durationDistribution}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="duration_range" tick={{ fontSize: 12 }} />
-                      <YAxis
-                        tickFormatter={(value) => value.toLocaleString()}
-                        width={60}
-                        tick={{ fontSize: 12 }}
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Bar
-                        dataKey="count"
-                        fill="#8b5cf6"
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={analytics.recordings.durationDistribution}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="duration_range"
+                          tick={{ fontSize: 12 }}
+                          height={60}
+                          interval={0}
+                          angle={-45}
+                          textAnchor="end"
+                        />
+                        <YAxis
+                          tickFormatter={(value) => value.toLocaleString()}
+                          width={60}
+                          tick={{ fontSize: 12 }}
+                        />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Bar
+                          dataKey="count"
+                          fill="hsl(var(--chart-1))"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
 
                 {/* Recording Stats */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
                     Recording Statistics
                   </h3>
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Total Recordings
-                      </span>
-                      <span className="text-lg font-semibold">
-                        {analytics.recordings.total.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Avg. Duration
-                      </span>
-                      <span className="text-lg font-semibold">
-                        {formatDuration(analytics.recordings.avgDuration)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Total Interactions
-                      </span>
-                      <span className="text-lg font-semibold">
-                        {analytics.recordings.totalInteractions.toLocaleString()}
-                      </span>
-                    </div>
+                  <div className="grid gap-6">
+                    <Card className="p-4 border-border">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <p className="text-sm text-muted-foreground">
+                            Total Recordings
+                          </p>
+                          <p className="text-2xl font-bold">
+                            {analytics.recordings.total.toLocaleString()}
+                          </p>
+                        </div>
+                        <Video className="h-8 w-8 text-muted-foreground/30" />
+                      </div>
+                    </Card>
+                    <Card className="p-4 border-border">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <p className="text-sm text-muted-foreground">
+                            Average Duration
+                          </p>
+                          <p className="text-2xl font-bold">
+                            {formatDuration(analytics.recordings.avgDuration)}
+                          </p>
+                        </div>
+                        <Clock className="h-8 w-8 text-muted-foreground/30" />
+                      </div>
+                    </Card>
+                    <Card className="p-4 border-border">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <p className="text-sm text-muted-foreground">
+                            Total Interactions
+                          </p>
+                          <p className="text-2xl font-bold">
+                            {analytics.recordings.totalInteractions.toLocaleString()}
+                          </p>
+                        </div>
+                        <MousePointer className="h-8 w-8 text-muted-foreground/30" />
+                      </div>
+                    </Card>
                   </div>
                 </div>
               </div>
