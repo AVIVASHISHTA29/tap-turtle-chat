@@ -19,7 +19,6 @@ import {
   Laptop,
   Loader2,
   MousePointer2,
-  Video,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -53,16 +52,9 @@ export default function RecordingsLayout({
   }
 
   return (
-    <div className="flex h-[calc(100vh-65px)]">
-      {/* Secondary Sidebar */}
+    <div className="flex h-full max-h-screen">
       <div className="w-80 border-r border-border bg-card">
-        <div className="p-4 border-b border-border">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Video className="h-5 w-5" />
-            Session Recordings
-          </h2>
-        </div>
-        <ScrollArea className="h-[calc(100vh-130px)]">
+        <ScrollArea className="h-full max-h-full">
           {isLoading ? (
             <div className="flex items-center justify-center h-40">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
