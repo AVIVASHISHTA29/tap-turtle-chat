@@ -19,10 +19,12 @@ import {
   Info,
   Monitor,
   MousePointer,
+  PieChart as PieChartIcon,
   RefreshCw,
   Users,
   Video,
 } from "lucide-react";
+import { useState } from "react";
 import { useSelector } from "react-redux";
 import {
   Area,
@@ -122,6 +124,12 @@ interface TooltipProps {
 //   }>;
 // }
 
+interface BrowserTooltipData {
+  name: string;
+  value: number;
+  payload: BrowserData;
+}
+
 function formatDuration(seconds: number | null): string {
   if (!seconds) return "N/A";
   const minutes = Math.floor(seconds / 60);
@@ -152,10 +160,10 @@ const BROWSER_COLORS = ["#3b82f6", "#06b6d4", "#f59e0b", "#8b5cf6", "#6366f1"];
 const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-4 rounded-lg shadow-lg border">
-        <p className="font-medium">{label}</p>
+      <div className="bg-secondary-foreground/90 p-4 rounded-lg shadow-lg border border-border">
+        <p className="font-medium text-secondary">{label}</p>
         {payload.map((entry, index) => (
-          <p key={index} style={{ color: entry.color }} className="text-sm">
+          <p key={index} className="text-sm text-secondary">
             {entry.name}: {entry.value.toLocaleString()}
           </p>
         ))}
@@ -252,6 +260,8 @@ export default function Page() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
+  const [isDonut, setIsDonut] = useState(false);
+
   if (!selectedProject) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -311,7 +321,7 @@ export default function Page() {
                   <TooltipTrigger>
                     <Info className="h-4 w-4 text-muted-foreground" />
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent className="bg-secondary-foreground text-secondary border-border">
                     <p>
                       Overview of session metrics including total sessions,
                       recent activity, viewport sizes, and interaction rates
@@ -422,19 +432,38 @@ export default function Page() {
         {processedBrowsers.length > 0 && (
           <Card className="col-span-1">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Browser Distribution
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  Browser Distribution
+                  <TooltipProvider>
+                    <UITooltip>
+                      <TooltipTrigger>
+                        <Info className="h-4 w-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-secondary-foreground text-secondary border-border">
+                        <p>Distribution of browsers used by your visitors</p>
+                      </TooltipContent>
+                    </UITooltip>
+                  </TooltipProvider>
+                </CardTitle>
                 <TooltipProvider>
                   <UITooltip>
-                    <TooltipTrigger>
-                      <Info className="h-4 w-4 text-muted-foreground" />
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsDonut(!isDonut)}
+                        className="h-8 w-8"
+                      >
+                        <PieChartIcon className="h-4 w-4" />
+                      </Button>
                     </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Distribution of browsers used by your visitors</p>
+                    <TooltipContent className="bg-secondary-foreground text-secondary border-border">
+                      <p>Toggle chart type</p>
                     </TooltipContent>
                   </UITooltip>
                 </TooltipProvider>
-              </CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="h-[300px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
@@ -445,22 +474,60 @@ export default function Page() {
                     nameKey="browser"
                     cx="50%"
                     cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
+                    innerRadius={isDonut ? 60 : 0}
+                    outerRadius={90}
                     paddingAngle={2}
                     label={({ name, percent }) =>
-                      `${name} (${(percent * 100).toFixed(0)}%)`
+                      percent > 0.05
+                        ? `${name} (${(percent * 100).toFixed(0)}%)`
+                        : ""
                     }
+                    labelLine={{ stroke: "gray", strokeWidth: 1, opacity: 0.5 }}
                   >
                     {processedBrowsers.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={BROWSER_COLORS[index % BROWSER_COLORS.length]}
+                        className="stroke-background hover:opacity-80 transition-opacity"
                       />
                     ))}
                   </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend verticalAlign="bottom" height={36} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload?.[0]) {
+                        const data = payload[0] as BrowserTooltipData;
+                        const total = processedBrowsers.reduce(
+                          (acc, curr) => acc + curr.count,
+                          0
+                        );
+                        const percentage = ((data.value / total) * 100).toFixed(
+                          1
+                        );
+
+                        return (
+                          <div className="bg-secondary-foreground/90 p-4 rounded-lg shadow-lg border border-border">
+                            <p className="font-medium text-secondary mb-1">
+                              {data.name}
+                            </p>
+                            <p className="text-sm text-secondary">
+                              {data.value.toLocaleString()} sessions
+                              <span className="text-secondary/80 ml-1">
+                                ({percentage}%)
+                              </span>
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    height={36}
+                    formatter={(value) => (
+                      <span className="text-sm">{value}</span>
+                    )}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -479,7 +546,7 @@ export default function Page() {
                     <TooltipTrigger>
                       <Info className="h-4 w-4 text-muted-foreground" />
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent className="bg-secondary-foreground text-secondary border-border">
                       <p>
                         Analytics from session recordings including duration
                         distribution and interaction metrics
@@ -563,7 +630,7 @@ export default function Page() {
                     <TooltipTrigger>
                       <Info className="h-4 w-4 text-muted-foreground" />
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent className="bg-secondary-foreground text-secondary border-border">
                       <p>
                         Top clicked elements on your website with their CSS
                         selectors and click counts
@@ -586,7 +653,14 @@ export default function Page() {
                     dataKey="css_selector"
                     width={150}
                     tick={({ x, y, payload }) => (
-                      <text x={x} y={y} dy={4} textAnchor="end" fontSize={12}>
+                      <text
+                        x={x}
+                        y={y}
+                        dy={4}
+                        textAnchor="end"
+                        fontSize={12}
+                        fill="grey"
+                      >
                         {payload.value.length > 25
                           ? `${payload.value.substring(0, 25)}...`
                           : payload.value}
@@ -598,11 +672,11 @@ export default function Page() {
                       const { active, payload } = props;
                       if (active && payload?.[0]) {
                         return (
-                          <div className="bg-white p-4 rounded-lg shadow-lg border">
-                            <p className="font-medium mb-2">
+                          <div className="bg-secondary-foreground/90 p-4 rounded-lg shadow-lg border border-border">
+                            <p className="font-medium mb-2 text-secondary">
                               {payload[0].payload.css_selector}
                             </p>
-                            <p className="text-sm">
+                            <p className="text-sm text-secondary">
                               Clicks: {payload[0].value.toLocaleString()}
                             </p>
                           </div>
@@ -633,7 +707,7 @@ export default function Page() {
                     <TooltipTrigger>
                       <Info className="h-4 w-4 text-muted-foreground" />
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent className="bg-secondary-foreground text-secondary border-border">
                       <p>
                         Most visited pages with view counts, unique visitors,
                         and average time spent
@@ -654,7 +728,7 @@ export default function Page() {
                             {page.page_url}
                           </span>
                         </TooltipTrigger>
-                        <TooltipContent>
+                        <TooltipContent className="bg-secondary-foreground text-secondary border-border">
                           <p>{page.page_url}</p>
                         </TooltipContent>
                       </UITooltip>
@@ -689,7 +763,7 @@ export default function Page() {
                     <TooltipTrigger>
                       <Info className="h-4 w-4 text-muted-foreground" />
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent className="bg-secondary-foreground text-secondary border-border">
                       <p>
                         Timeline of different event types over the last 7 days
                       </p>
@@ -748,7 +822,7 @@ export default function Page() {
                     <TooltipTrigger>
                       <Info className="h-4 w-4 text-muted-foreground" />
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent className="bg-secondary-foreground text-secondary border-border">
                       <p>
                         Distribution of user activity across different hours of
                         the day
