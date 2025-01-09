@@ -3,6 +3,12 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+  Tooltip as UITooltip,
+} from "@/components/ui/tooltip";
 import { useGetProjectAnalyticsQuery } from "@/redux/features/projects/api";
 import { RootState } from "@/redux/store";
 import {
@@ -10,6 +16,7 @@ import {
   ArrowDown,
   ArrowUp,
   Clock,
+  Info,
   Monitor,
   MousePointer,
   RefreshCw,
@@ -104,6 +111,16 @@ interface TooltipProps {
   }[];
   label?: string;
 }
+
+// interface CustomBarTooltipProps {
+//   active?: boolean;
+//   payload?: Array<{
+//     value: number;
+//     payload: {
+//       css_selector: string;
+//     };
+//   }>;
+// }
 
 function formatDuration(seconds: number | null): string {
   if (!seconds) return "N/A";
@@ -206,7 +223,17 @@ export default function Page() {
       ) || [];
 
   // Process browser data
-  const processedBrowsers: BrowserData[] = [...(analytics?.browsers || [])];
+  const processedBrowsers: BrowserData[] = [...(analytics?.browsers || [])]
+    .map((browser) => ({
+      browser: browser.browser,
+      count: Number(browser.count),
+    }))
+    .filter((browser) => browser.count > 0);
+
+  console.log("Browser Data:", {
+    raw: analytics?.browsers,
+    processed: processedBrowsers,
+  });
 
   // Process hourly pattern data
   const processedHourlyPattern: HourlyData[] = [
@@ -272,13 +299,26 @@ export default function Page() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Enhanced Session Overview */}
         <Card className="col-span-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
               Session Overview
+              <TooltipProvider>
+                <UITooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Overview of session metrics including total sessions,
+                      recent activity, viewport sizes, and interaction rates
+                    </p>
+                  </TooltipContent>
+                </UITooltip>
+              </TooltipProvider>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -378,6 +418,55 @@ export default function Page() {
           </CardContent>
         </Card>
 
+        {/* Browser Distribution */}
+        {processedBrowsers.length > 0 && (
+          <Card className="col-span-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Browser Distribution
+                <TooltipProvider>
+                  <UITooltip>
+                    <TooltipTrigger>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Distribution of browsers used by your visitors</p>
+                    </TooltipContent>
+                  </UITooltip>
+                </TooltipProvider>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px] flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={processedBrowsers}
+                    dataKey="count"
+                    nameKey="browser"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={80}
+                    paddingAngle={2}
+                    label={({ name, percent }) =>
+                      `${name} (${(percent * 100).toFixed(0)}%)`
+                    }
+                  >
+                    {processedBrowsers.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={BROWSER_COLORS[index % BROWSER_COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
         {/* New Recording Analytics Card */}
         {analytics?.recordings && (
           <Card className="col-span-2">
@@ -385,6 +474,19 @@ export default function Page() {
               <CardTitle className="flex items-center gap-2">
                 <Video className="h-5 w-5" />
                 Recording Insights
+                <TooltipProvider>
+                  <UITooltip>
+                    <TooltipTrigger>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Analytics from session recordings including duration
+                        distribution and interaction metrics
+                      </p>
+                    </TooltipContent>
+                  </UITooltip>
+                </TooltipProvider>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -450,46 +552,151 @@ export default function Page() {
           </Card>
         )}
 
-        {/* Browser Distribution */}
-        {processedBrowsers.length > 0 && (
+        {/* Most Clicked Elements */}
+        {processedClicks.length > 0 && (
           <Card className="col-span-2">
             <CardHeader>
-              <CardTitle>Browser Distribution</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Most Clicked Elements
+                <TooltipProvider>
+                  <UITooltip>
+                    <TooltipTrigger>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Top clicked elements on your website with their CSS
+                        selectors and click counts
+                      </p>
+                    </TooltipContent>
+                  </UITooltip>
+                </TooltipProvider>
+              </CardTitle>
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={processedBrowsers}
+                <BarChart data={processedClicks} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    type="number"
+                    tickFormatter={(value) => value.toLocaleString()}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="css_selector"
+                    width={150}
+                    tick={({ x, y, payload }) => (
+                      <text x={x} y={y} dy={4} textAnchor="end" fontSize={12}>
+                        {payload.value.length > 25
+                          ? `${payload.value.substring(0, 25)}...`
+                          : payload.value}
+                      </text>
+                    )}
+                  />
+                  <Tooltip
+                    content={(props: any) => {
+                      const { active, payload } = props;
+                      if (active && payload?.[0]) {
+                        return (
+                          <div className="bg-white p-4 rounded-lg shadow-lg border">
+                            <p className="font-medium mb-2">
+                              {payload[0].payload.css_selector}
+                            </p>
+                            <p className="text-sm">
+                              Clicks: {payload[0].value.toLocaleString()}
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar
                     dataKey="count"
-                    nameKey="browser"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={({ name, percent }) =>
-                      `${name} (${(percent * 100).toFixed(0)}%)`
-                    }
-                  >
-                    {processedBrowsers.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={BROWSER_COLORS[index % BROWSER_COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                </PieChart>
+                    fill={CHART_COLORS.click}
+                    radius={[0, 4, 4, 0]}
+                  />
+                </BarChart>
               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Top Pages */}
+        {analytics.pageViews.length > 0 && (
+          <Card className="col-span-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Top Pages
+                <TooltipProvider>
+                  <UITooltip>
+                    <TooltipTrigger>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Most visited pages with view counts, unique visitors,
+                        and average time spent
+                      </p>
+                    </TooltipContent>
+                  </UITooltip>
+                </TooltipProvider>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4 h-[300px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-secondary">
+                {analytics.pageViews.map((page, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <UITooltip>
+                        <TooltipTrigger className="text-left">
+                          <span className="text-sm font-medium truncate max-w-[200px] block">
+                            {page.page_url}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{page.page_url}</p>
+                        </TooltipContent>
+                      </UITooltip>
+                      <span className="text-sm font-semibold">
+                        {page.views.toLocaleString()} views
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {page.unique_visitors.toLocaleString()} visitors
+                      </span>
+                      <span>
+                        Avg. time: {formatDuration(page.avg_duration)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
 
         {/* Events Over Time */}
         {timeSeriesData.length > 0 && (
-          <Card className="col-span-3">
+          <Card className="col-span-full">
             <CardHeader>
-              <CardTitle>Events Over Time (Last 7 Days)</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Events Over Time
+                <TooltipProvider>
+                  <UITooltip>
+                    <TooltipTrigger>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Timeline of different event types over the last 7 days
+                      </p>
+                    </TooltipContent>
+                  </UITooltip>
+                </TooltipProvider>
+              </CardTitle>
             </CardHeader>
             <CardContent className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -530,77 +737,26 @@ export default function Page() {
           </Card>
         )}
 
-        {/* Most Clicked Elements */}
-        {processedClicks.length > 0 && (
-          <Card className="col-span-2">
-            <CardHeader>
-              <CardTitle>Most Clicked Elements</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={processedClicks} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    type="number"
-                    tickFormatter={(value) => value.toLocaleString()}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="css_selector"
-                    width={150}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar
-                    dataKey="count"
-                    fill={CHART_COLORS.click}
-                    radius={[0, 4, 4, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Top Pages */}
-        {analytics.pageViews.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Pages</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {analytics.pageViews.map((page, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium truncate max-w-[200px]">
-                        {page.page_url}
-                      </span>
-                      <span className="text-sm font-semibold">
-                        {page.views.toLocaleString()} views
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {page.unique_visitors.toLocaleString()} visitors
-                      </span>
-                      <span>
-                        Avg. time: {formatDuration(page.avg_duration)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Daily Activity Pattern */}
         {processedHourlyPattern.length > 0 && (
-          <Card className="col-span-3">
+          <Card className="col-span-full">
             <CardHeader>
-              <CardTitle>Daily Activity Pattern</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Daily Activity Pattern
+                <TooltipProvider>
+                  <UITooltip>
+                    <TooltipTrigger>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Distribution of user activity across different hours of
+                        the day
+                      </p>
+                    </TooltipContent>
+                  </UITooltip>
+                </TooltipProvider>
+              </CardTitle>
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">

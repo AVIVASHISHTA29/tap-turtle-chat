@@ -132,6 +132,7 @@ export async function GET(
         WHERE project_id = {projectId:String}
         AND user_agent IS NOT NULL
         GROUP BY browser
+        HAVING count > 0
         ORDER BY count DESC
       `,
       query_params: {
@@ -282,6 +283,8 @@ export async function GET(
       recordingAnalyticsResult.json(),
     ]);
 
+    console.log("Browser data from DB:", browsers);
+
     // Process recording analytics
     const recordingStats = (recordingAnalytics[0] || {
       total_recordings: "0",
@@ -302,7 +305,10 @@ export async function GET(
       timeSeries,
       clicks,
       sessions: sessions[0],
-      browsers,
+      browsers: browsers.map((b: any) => ({
+        browser: b.browser,
+        count: Number(b.count),
+      })),
       pageViews,
       hourlyPattern,
       recordings: {
