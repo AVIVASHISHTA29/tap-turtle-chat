@@ -12,6 +12,44 @@ export interface CreateProjectRequest {
   project_name: string;
 }
 
+export interface ProjectAnalytics {
+  events: Array<{
+    event_type: string;
+    count: number;
+  }>;
+  timeSeries: Array<{
+    hour: string;
+    event_type: string;
+    count: number;
+  }>;
+  clicks: Array<{
+    css_selector: string;
+    count: number;
+    last_metadata: string;
+  }>;
+  sessions: {
+    total_sessions: number;
+    avg_viewport_width: number;
+    avg_viewport_height: number;
+    sessions_last_24h: number;
+    sessions_last_7d: number;
+  };
+  browsers: Array<{
+    browser: string;
+    count: number;
+  }>;
+  pageViews: Array<{
+    page_url: string;
+    views: number;
+    avg_duration: number;
+    unique_visitors: number;
+  }>;
+  hourlyPattern: Array<{
+    hour: number;
+    count: number;
+  }>;
+}
+
 export const projectsApi = createApi({
   reducerPath: "projectsApi",
   baseQuery: authenticatedBaseQuery,
@@ -29,7 +67,14 @@ export const projectsApi = createApi({
       }),
       invalidatesTags: ["Project"],
     }),
+    getProjectAnalytics: builder.query<ProjectAnalytics, string>({
+      query: (projectId) => `projects/${projectId}/analytics`,
+    }),
   }),
 });
 
-export const { useGetProjectsQuery, useCreateProjectMutation } = projectsApi;
+export const {
+  useGetProjectsQuery,
+  useCreateProjectMutation,
+  useGetProjectAnalyticsQuery,
+} = projectsApi;
