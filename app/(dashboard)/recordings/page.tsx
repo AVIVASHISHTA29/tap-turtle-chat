@@ -1,54 +1,151 @@
 // app/recordings/page.tsx
 "use client";
 
-import { RecordingList } from "@/components/app/recording/recording-list";
-import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
-
-async function fetchSessions() {
-  try {
-    const res = await fetch("/api/recording_sessions", {
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      throw new Error(`Failed to fetch sessions: ${res.statusText}`);
-    }
-    const data = await res.json();
-    return data.sessions;
-  } catch (error) {
-    console.error("Error fetching sessions:", error);
-    return [];
-  }
-}
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useGetRecordingSessionsQuery } from "@/redux/features/recordings/api";
+import { RootState } from "@/redux/store";
+import { formatDistanceToNow } from "date-fns";
+import {
+  Calendar,
+  Clock,
+  Globe,
+  Info,
+  Laptop,
+  Loader2,
+  MousePointer2,
+  Video,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSelector } from "react-redux";
 
 export default function RecordingsPage() {
-  const [sessions, setSessions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const selectedProject = useSelector(
+    (state: RootState) => state.projects.selectedProject
+  );
+  const pathname = usePathname();
 
-  useEffect(() => {
-    const loadSessions = async () => {
-      const data = await fetchSessions();
-      setSessions(data);
-      setIsLoading(false);
-    };
+  const { data: sessions, isLoading } = useGetRecordingSessionsQuery(
+    selectedProject?.project_id ?? "",
+    {
+      skip: !selectedProject,
+    }
+  );
 
-    loadSessions();
-  }, []);
+  if (!selectedProject) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <h2 className="text-2xl font-semibold text-gray-600">
+          Please select a project to view recordings
+        </h2>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen w-full">
+        <Loader2 className="animate-spin size-6" />
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-8 max-w-[1400px]">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Session Recordings</h1>
-      </div>
-      {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    <div className="flex h-[calc(100vh-65px)]">
+      {/* Secondary Sidebar */}
+      <div className="w-80 border-r border-border bg-card">
+        <div className="p-4 border-b border-border">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Video className="h-5 w-5" />
+            Session Recordings
+          </h2>
         </div>
-      ) : sessions.length > 0 ? (
-        <RecordingList sessions={sessions} />
-      ) : (
-        <p className="text-muted-foreground">No recordings found.</p>
-      )}
+        <ScrollArea className="h-[calc(100vh-130px)]">
+          <div className="p-4 space-y-2">
+            {sessions?.map((session) => (
+              <Link
+                key={session.session_id}
+                href={`/recordings/${session.session_id}`}
+              >
+                <Card
+                  className={`p-4 hover:bg-accent transition-colors cursor-pointer ${
+                    pathname === `/recordings/${session.session_id}`
+                      ? "bg-accent"
+                      : ""
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium truncate max-w-[180px]">
+                          {session.page_url}
+                        </span>
+                      </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Info className="h-4 w-4 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-secondary-foreground text-secondary border-border">
+                            <p>View session recording</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDistanceToNow(
+                          new Date(session.start_timestamp),
+                          {
+                            addSuffix: true,
+                          }
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {session.end_timestamp
+                          ? formatDistanceToNow(
+                              new Date(session.end_timestamp),
+                              {
+                                addSuffix: true,
+                              }
+                            )
+                          : "Ongoing"}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Laptop className="h-3 w-3" />
+                        {session.viewport_width}x{session.viewport_height}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MousePointer2 className="h-3 w-3" />
+                        {session.user_agent ? "Desktop" : "Mobile"}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        {pathname === "/recordings" ? (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            Select a recording to view details
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

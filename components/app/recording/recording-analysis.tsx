@@ -4,14 +4,22 @@ import MarkdownRenderer from "@/components/ui/markdown";
 import { Brain } from "lucide-react";
 import { useState } from "react";
 
-export function RecordingAnalysis({ sessionId }: { sessionId: string }) {
+export function RecordingAnalysis({
+  projectId,
+  sessionId,
+}: {
+  projectId: string;
+  sessionId: string;
+}) {
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const analyzeRecording = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/recording_analysis/${sessionId}`);
+      const response = await fetch(
+        `/api/recording_analysis/${projectId}/${sessionId}`
+      );
       if (!response.ok) {
         throw new Error("Failed to analyze recording");
       }

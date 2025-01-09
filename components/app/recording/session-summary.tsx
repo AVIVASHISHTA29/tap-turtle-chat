@@ -71,7 +71,13 @@ interface SessionSummary {
   pageNavigation: PageNavigation[];
 }
 
-export function SessionSummary({ sessionId }: { sessionId: string }) {
+export function SessionSummary({
+  projectId,
+  sessionId,
+}: {
+  projectId: string;
+  sessionId: string;
+}) {
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +87,7 @@ export function SessionSummary({ sessionId }: { sessionId: string }) {
     setError(null);
     try {
       const response = await fetch(
-        `/api/recording_events/${sessionId}/summary`
+        `/api/recording_events/${projectId}/${sessionId}/summary`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch summary");
