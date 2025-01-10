@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, House, PanelsTopLeft, Video } from "lucide-react";
+import { ChartArea, House, Video } from "lucide-react";
 
 import {
   Sidebar,
@@ -31,15 +31,15 @@ const items: SidebarItems[] = [
     icon: House,
   },
   {
-    title: "Projects",
-    url: "/projects",
-    icon: PanelsTopLeft,
+    title: "Analytics",
+    url: "/analytics",
+    icon: ChartArea,
   },
-  {
-    title: "Chat",
-    url: "/chat",
-    icon: Bot,
-  },
+  // {
+  //   title: "Projects",
+  //   url: "/projects",
+  //   icon: PanelsTopLeft,
+  // },
   {
     title: "Recordings",
     url: "/recordings",

@@ -17,7 +17,7 @@ export async function GET() {
         FROM projects p
         JOIN user_projects up ON p.project_id = up.project_id
         WHERE up.user_id = '${userId}'
-        ORDER BY p.created_at DESC
+        ORDER BY p.created_at ASC
       `,
       format: "JSONEachRow",
     });

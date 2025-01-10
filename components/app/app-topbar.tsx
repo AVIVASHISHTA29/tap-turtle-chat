@@ -4,20 +4,20 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { UserButton } from "@clerk/nextjs";
 import { Bell, ChevronDown, Settings } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useSidebar } from "../ui/sidebar";
 
 type AppTopbarProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function AppTopbar({ className, ...props }: AppTopbarProps) {
   const { state } = useSidebar();
+  const router = useRouter();
   const isExpanded = state === "expanded";
 
   return (
@@ -89,12 +89,12 @@ export function AppTopbar({ className, ...props }: AppTopbarProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Settings</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Billing</DropdownMenuItem>
-              <DropdownMenuItem>Team</DropdownMenuItem>
-              <DropdownMenuItem>Subscription</DropdownMenuItem>
+              <DropdownMenuLabel
+                onClick={() => router.push("/projects")}
+                className="cursor-pointer"
+              >
+                Projects
+              </DropdownMenuLabel>
             </DropdownMenuContent>
           </DropdownMenu>
 
