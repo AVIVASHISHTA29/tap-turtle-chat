@@ -90,12 +90,12 @@ export const recordingsApi = createApi({
         url: `/api/projects/${projectId}/recordings/${sessionId}/summary`,
       }),
     }),
-    getRecordingAnalysis: builder.query<
+    getRecordingAnalysis: builder.mutation<
       { analysis: string },
       { projectId: string; sessionId: string }
     >({
       query: ({ projectId, sessionId }) => ({
-        url: `/api/recording_analysis/${projectId}/${sessionId}`,
+        url: `/api/projects/${projectId}/recordings/${sessionId}/analysis`,
       }),
     }),
   }),
@@ -105,5 +105,5 @@ export const {
   useGetRecordingSessionsQuery,
   useGetRecordingEventsQuery,
   useGetSessionSummaryQuery,
-  useGetRecordingAnalysisQuery,
+  useGetRecordingAnalysisMutation,
 } = recordingsApi;

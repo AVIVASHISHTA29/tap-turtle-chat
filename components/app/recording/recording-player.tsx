@@ -13,6 +13,14 @@ interface RecordingPlayerProps {
   events: unknown[];
 }
 
+interface RRWebEvent {
+  type?: number;
+  event_type?: number;
+  timestamp?: number;
+  time?: number;
+  data?: unknown;
+}
+
 export function RecordingPlayer({ events }: RecordingPlayerProps) {
   const playerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<rrwebPlayer | null>(null);
@@ -24,22 +32,49 @@ export function RecordingPlayer({ events }: RecordingPlayerProps) {
         playerInstanceRef.current.getReplayer().destroy();
       }
 
-      // Create new player instance
-      playerInstanceRef.current = new rrwebPlayer({
-        target: playerRef.current,
-        props: {
-          events: events as eventWithTimeAndPacker[],
-          autoPlay: false,
-          height: 600,
-          width: 800,
-        },
-      });
+      try {
+        // Ensure events have the correct format
+        const formattedEvents = events.map((event) => {
+          const e = event as RRWebEvent;
+          return {
+            ...e,
+            timestamp: e.timestamp || e.time,
+            type: e.type || e.event_type,
+          };
+        });
+
+        console.log("Initializing player with events:", formattedEvents);
+
+        // Create new player instance
+        playerInstanceRef.current = new rrwebPlayer({
+          target: playerRef.current,
+          props: {
+            events: formattedEvents as eventWithTimeAndPacker[],
+            autoPlay: true,
+            skipInactive: true,
+            showController: true,
+            width: 800,
+            height: 500,
+            // FIXME: Remove these if they cause issues
+            unpackFn: undefined,
+            triggerFocus: true,
+          },
+        });
+
+        console.log("Player instance created:", playerInstanceRef.current);
+      } catch (error) {
+        console.error("Error initializing rrweb player:", error);
+      }
     }
 
     // Cleanup on unmount
     return () => {
       if (playerInstanceRef.current) {
-        playerInstanceRef.current.getReplayer().destroy();
+        try {
+          playerInstanceRef.current.getReplayer().destroy();
+        } catch (error) {
+          console.error("Error destroying player:", error);
+        }
       }
     };
   }, [events]);

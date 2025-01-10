@@ -1,8 +1,8 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import MarkdownRenderer from "@/components/ui/markdown";
-import { Brain } from "lucide-react";
-import { useState } from "react";
+import { useGetRecordingAnalysisMutation } from "@/redux/features/recordings/api";
+import { Bot } from "lucide-react";
 
 export function RecordingAnalysis({
   projectId,
@@ -11,41 +11,30 @@ export function RecordingAnalysis({
   projectId: string;
   sessionId: string;
 }) {
-  const [analysis, setAnalysis] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const analyzeRecording = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `/api/recording_analysis/${projectId}/${sessionId}`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to analyze recording");
-      }
-      const data = await response.json();
-      setAnalysis(data.analysis);
-    } catch (error) {
-      console.error("Error analyzing recording:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [getRecordingAnalysis, { isLoading, data }] =
+    useGetRecordingAnalysisMutation();
 
   return (
     <div className="space-y-4">
       <Button
-        onClick={analyzeRecording}
-        disabled={loading}
+        onClick={() => getRecordingAnalysis({ projectId, sessionId })}
+        disabled={isLoading}
         className="flex items-center gap-2"
       >
-        <Brain className="h-4 w-4" />
-        {loading ? "Analyzing..." : "Analyze Recording"}
+        <Bot className="h-4 w-4" />
+        {isLoading
+          ? "Analyzing..."
+          : data?.analysis
+          ? "Regenerate"
+          : "Generate AI Analysis"}
       </Button>
 
-      {analysis && (
+      {data?.analysis && (
         <div className="mt-4">
-          <MarkdownRenderer content={analysis} className="prose md:prose-2xl" />
+          <MarkdownRenderer
+            content={data.analysis}
+            className="prose md:prose-2xl"
+          />
         </div>
       )}
     </div>
