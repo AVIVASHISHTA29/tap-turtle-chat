@@ -46,37 +46,37 @@ export async function POST(req: Request) {
 
     const project_id = uuidv4();
     const api_key = uuidv4();
-    const created_at = new Date().toISOString();
+    const created_at = new Date()
+      .toISOString()
+      .replace("T", " ")
+      .replace("Z", "");
 
     // Insert project
-    await clickhouse.query({
-      query: `
-        INSERT INTO projects
-        (project_id, api_key, project_name, created_at)
-        VALUES
-        ({project_id:String}, {api_key:String}, {project_name:String}, {created_at:String})
-      `,
-      query_params: {
-        project_id,
-        api_key,
-        project_name,
-        created_at,
-      },
+    await clickhouse.insert({
+      table: "projects",
+      values: [
+        {
+          project_id,
+          api_key,
+          project_name,
+          created_at,
+        },
+      ],
+      format: "JSONEachRow",
     });
 
     // Link project to user
-    await clickhouse.query({
-      query: `
-        INSERT INTO user_projects
-        (user_id, project_id, role, created_at)
-        VALUES
-        ({userId:String}, {project_id:String}, 'owner', {created_at:String})
-      `,
-      query_params: {
-        userId,
-        project_id,
-        created_at,
-      },
+    await clickhouse.insert({
+      table: "user_projects",
+      values: [
+        {
+          user_id: userId,
+          project_id,
+          role: "owner",
+          created_at,
+        },
+      ],
+      format: "JSONEachRow",
     });
 
     return NextResponse.json({
@@ -87,6 +87,9 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Error creating project:", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

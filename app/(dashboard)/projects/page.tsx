@@ -14,12 +14,13 @@ import {
   useCreateProjectMutation,
   useGetProjectsQuery,
 } from "@/redux/features/projects/api";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 export default function ProjectsPage() {
   const [newProjectName, setNewProjectName] = useState("");
   const { data: projects, isLoading } = useGetProjectsQuery();
-  const [createProject] = useCreateProjectMutation();
+  const [createProject, { isLoading: isCreating }] = useCreateProjectMutation();
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +35,11 @@ export default function ProjectsPage() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
@@ -47,7 +52,9 @@ export default function ProjectsPage() {
             value={newProjectName}
             onChange={(e) => setNewProjectName(e.target.value)}
           />
-          <Button type="submit">Create Project</Button>
+          <Button type="submit" disabled={isCreating}>
+            {isCreating ? "Creating..." : "Create Project"}
+          </Button>
         </form>
       </div>
 

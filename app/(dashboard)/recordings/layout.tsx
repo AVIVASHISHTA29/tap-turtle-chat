@@ -14,16 +14,23 @@ import { RootState } from "@/redux/store";
 import { formatDistanceToNow } from "date-fns";
 import {
   Calendar,
-  Clock,
+  Chrome,
   Globe,
+  Globe2,
   Info,
   Laptop,
   Loader2,
+  Monitor,
+  MonitorSmartphone,
   MousePointer2,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { UAParser } from "ua-parser-js";
+
+const parser = new UAParser();
 
 export default function RecordingsLayout({
   children,
@@ -31,17 +38,72 @@ export default function RecordingsLayout({
   children: React.ReactNode;
 }) {
   const { state } = useSidebar();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState(0);
   const selectedProject = useSelector(
     (state: RootState) => state.projects.selectedProject
   );
   const pathname = usePathname();
 
-  const { data: sessions, isLoading } = useGetRecordingSessionsQuery(
-    selectedProject?.project_id ?? "",
+  const { data, isLoading, isFetching } = useGetRecordingSessionsQuery(
+    {
+      projectId: selectedProject?.project_id ?? "",
+      offset: currentPage * 20,
+      limit: 20,
+    },
     {
       skip: !selectedProject,
     }
   );
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && data?.hasMore && !isFetching) {
+          setCurrentPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentElement = loadMoreRef.current;
+    if (currentElement) {
+      observer.observe(currentElement);
+    }
+
+    return () => {
+      if (currentElement) {
+        observer.unobserve(currentElement);
+      }
+    };
+  }, [data?.hasMore, isFetching]);
+
+  const getBrowserIcon = (userAgent: string | null) => {
+    if (!userAgent) return <Globe2 className="h-3 w-3" />;
+    parser.setUA(userAgent);
+    const browserName = parser.getBrowser().name?.toLowerCase() ?? "";
+
+    switch (browserName) {
+      case "chrome":
+        return <Chrome className="h-3 w-3" />;
+      case "firefox":
+        return <Monitor className="h-3 w-3" />;
+      case "safari":
+        return <MonitorSmartphone className="h-3 w-3" />;
+      default:
+        return <Globe2 className="h-3 w-3" />;
+    }
+  };
+
+  const getDeviceType = (userAgent: string | null) => {
+    if (!userAgent) return "Unknown";
+    parser.setUA(userAgent);
+    return parser.getDevice().type === "mobile" ||
+      parser.getDevice().type === "tablet"
+      ? "Mobile"
+      : "Desktop";
+  };
 
   if (!selectedProject) {
     return (
@@ -69,7 +131,7 @@ export default function RecordingsLayout({
             </div>
           ) : (
             <div className="p-4 space-y-2 gap-2">
-              {sessions?.map((session) => (
+              {data?.sessions?.map((session) => (
                 <Link
                   key={session.session_id}
                   href={`/recordings/${session.session_id}`}
@@ -111,15 +173,13 @@ export default function RecordingsLayout({
                           )}
                         </div>
                         <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {session.end_timestamp
-                            ? formatDistanceToNow(
-                                new Date(session.end_timestamp),
-                                {
-                                  addSuffix: true,
-                                }
-                              )
-                            : "Ongoing"}
+                          {getBrowserIcon(session.user_agent)}
+                          {session.user_agent
+                            ? (() => {
+                                parser.setUA(session.user_agent);
+                                return parser.getBrowser().name || "Unknown";
+                              })()
+                            : "Unknown"}
                         </div>
                         <div className="flex items-center gap-1">
                           <Laptop className="h-3 w-3" />
@@ -127,13 +187,20 @@ export default function RecordingsLayout({
                         </div>
                         <div className="flex items-center gap-1">
                           <MousePointer2 className="h-3 w-3" />
-                          {session.user_agent ? "Desktop" : "Mobile"}
+                          {getDeviceType(session.user_agent)}
                         </div>
                       </div>
                     </div>
                   </Card>
                 </Link>
               ))}
+              <div ref={loadMoreRef} className="h-4 w-full">
+                {(isFetching || data?.hasMore) && (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </ScrollArea>

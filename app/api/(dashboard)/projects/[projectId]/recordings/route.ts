@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import clickhouse from "@/lib/clickhouse";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
@@ -13,6 +14,9 @@ export async function GET(
     }
 
     const { projectId } = params;
+    const searchParams = req.nextUrl.searchParams;
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const offset = parseInt(searchParams.get("offset") || "0");
 
     // Verify user has access to this project
     const accessResult = await clickhouse.query({
@@ -49,16 +53,37 @@ export async function GET(
         FROM recording_sessions
         WHERE project_id = {projectId:String}
         ORDER BY start_timestamp DESC
+        LIMIT {limit:UInt32}
+        OFFSET {offset:UInt32}
+      `,
+      query_params: {
+        projectId,
+        limit,
+        offset,
+      },
+      format: "JSONEachRow",
+    });
+
+    const countQuery = await clickhouse.query({
+      query: `
+        SELECT count(*) as total
+        FROM recording_sessions
+        WHERE project_id = {projectId:String}
       `,
       query_params: {
         projectId,
       },
       format: "JSONEachRow",
     });
-
     const sessions = await query.json();
+    const countResult = await countQuery.json();
+    const total = countResult.length > 0 ? (countResult as any[])[0]?.total : 0;
 
-    return NextResponse.json(sessions);
+    return NextResponse.json({
+      sessions,
+      total,
+      hasMore: offset + limit < total,
+    });
   } catch (error: unknown) {
     console.error("Error fetching sessions:", error);
     return NextResponse.json(

@@ -12,6 +12,12 @@ export interface RecordingSession {
   referrer: string | null;
 }
 
+export interface RecordingSessionsResponse {
+  sessions: RecordingSession[];
+  total: number;
+  hasMore: boolean;
+}
+
 export interface RecordingEvent {
   rrweb_data: string;
   timestamp: string;
@@ -69,10 +75,27 @@ export const recordingsApi = createApi({
     baseUrl: process.env.NEXT_PUBLIC_BASE_URL || "",
   }),
   endpoints: (builder) => ({
-    getRecordingSessions: builder.query<RecordingSession[], string>({
-      query: (projectId: string) => ({
+    getRecordingSessions: builder.query<
+      RecordingSessionsResponse,
+      { projectId: string; offset: number; limit: number }
+    >({
+      query: ({ projectId, offset, limit }) => ({
         url: `/api/projects/${projectId}/recordings`,
+        params: { offset, limit },
       }),
+      serializeQueryArgs: ({ endpointName, queryArgs }) => {
+        return `${endpointName}-${queryArgs.projectId}`;
+      },
+      merge: (currentCache, newItems) => {
+        return {
+          sessions: [...(currentCache?.sessions || []), ...newItems.sessions],
+          total: newItems.total,
+          hasMore: newItems.hasMore,
+        };
+      },
+      forceRefetch({ currentArg, previousArg }) {
+        return currentArg?.offset !== previousArg?.offset;
+      },
     }),
     getRecordingEvents: builder.query<
       RecordingEvent[],
