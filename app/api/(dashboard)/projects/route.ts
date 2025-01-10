@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { project_name } = body;
+    const { project_name, project_url } = body;
 
     if (!project_name) {
       return new NextResponse("Project name is required", { status: 400 });
@@ -59,6 +59,7 @@ export async function POST(req: Request) {
           project_id,
           api_key,
           project_name,
+          project_url: project_url || "",
           created_at,
         },
       ],
@@ -83,6 +84,7 @@ export async function POST(req: Request) {
       project_id,
       api_key,
       project_name,
+      project_url,
       created_at,
     });
   } catch (error) {

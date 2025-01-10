@@ -4,12 +4,14 @@ import { authenticatedBaseQuery } from "../../app/baseQueries";
 export interface Project {
   project_id: string;
   project_name: string;
+  project_url: string;
   api_key: string;
   created_at: string;
 }
 
 export interface CreateProjectRequest {
   project_name: string;
+  project_url: string;
 }
 
 export interface ProjectAnalytics {
@@ -50,6 +52,11 @@ export interface ProjectAnalytics {
   }>;
 }
 
+export interface UpdateProjectRequest {
+  project_name?: string;
+  project_url?: string;
+}
+
 export const projectsApi = createApi({
   reducerPath: "projectsApi",
   baseQuery: authenticatedBaseQuery,
@@ -67,6 +74,24 @@ export const projectsApi = createApi({
       }),
       invalidatesTags: ["Project"],
     }),
+    updateProject: builder.mutation<
+      Project,
+      { projectId: string; data: UpdateProjectRequest }
+    >({
+      query: ({ projectId, data }) => ({
+        url: `projects/${projectId}`,
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: ["Project"],
+    }),
+    deleteProject: builder.mutation<void, string>({
+      query: (projectId) => ({
+        url: `projects/${projectId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Project"],
+    }),
     getProjectAnalytics: builder.query<ProjectAnalytics, string>({
       query: (projectId) => `projects/${projectId}/analytics`,
     }),
@@ -76,5 +101,7 @@ export const projectsApi = createApi({
 export const {
   useGetProjectsQuery,
   useCreateProjectMutation,
+  useUpdateProjectMutation,
+  useDeleteProjectMutation,
   useGetProjectAnalyticsQuery,
 } = projectsApi;

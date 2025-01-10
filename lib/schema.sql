@@ -2,10 +2,14 @@ CREATE TABLE IF NOT EXISTS projects (
     project_id UUID,          -- Unique project identifier
     api_key String,           -- API key for authentication
     project_name String,      -- Friendly name for the project
+    project_url String,       -- URL of the project
     created_at DateTime       -- Timestamp for project creation
 )
 ENGINE = MergeTree()
 ORDER BY (project_id);
+
+-- Add project_url column to projects table
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_url String DEFAULT '';
 
 -- Modify projects table to add DEFAULT now() to created_at
 ALTER TABLE projects MODIFY COLUMN created_at DateTime DEFAULT now();

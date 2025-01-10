@@ -15,10 +15,13 @@ import {
   useGetProjectsQuery,
 } from "@/redux/features/projects/api";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function ProjectsPage() {
+  const router = useRouter();
   const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectUrl, setNewProjectUrl] = useState("");
   const { data: projects, isLoading } = useGetProjectsQuery();
   const [createProject, { isLoading: isCreating }] = useCreateProjectMutation();
 
@@ -27,11 +30,19 @@ export default function ProjectsPage() {
     if (!newProjectName.trim()) return;
 
     try {
-      await createProject({ project_name: newProjectName.trim() }).unwrap();
+      await createProject({
+        project_name: newProjectName.trim(),
+        project_url: newProjectUrl.trim(),
+      }).unwrap();
       setNewProjectName("");
+      setNewProjectUrl("");
     } catch (error) {
       console.error("Failed to create project:", error);
     }
+  };
+
+  const handleProjectClick = (projectId: string) => {
+    router.push(`/projects/${projectId}`);
   };
 
   if (isLoading) {
@@ -46,21 +57,32 @@ export default function ProjectsPage() {
     <div className="container mx-auto p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-4">Your Projects</h1>
-        <form onSubmit={handleCreateProject} className="flex gap-4">
-          <Input
-            placeholder="New project name"
-            value={newProjectName}
-            onChange={(e) => setNewProjectName(e.target.value)}
-          />
-          <Button type="submit" disabled={isCreating}>
-            {isCreating ? "Creating..." : "Create Project"}
-          </Button>
+        <form onSubmit={handleCreateProject} className="flex flex-col gap-4">
+          <div className="flex gap-4">
+            <Input
+              placeholder="New project name"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+            />
+            <Input
+              placeholder="Project URL (optional)"
+              value={newProjectUrl}
+              onChange={(e) => setNewProjectUrl(e.target.value)}
+            />
+            <Button type="submit" disabled={isCreating}>
+              {isCreating ? "Creating..." : "Create Project"}
+            </Button>
+          </div>
         </form>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {projects?.map((project: Project) => (
-          <Card key={project.project_id}>
+          <Card
+            key={project.project_id}
+            className="cursor-pointer hover:border-primary transition-colors"
+            onClick={() => handleProjectClick(project.project_id)}
+          >
             <CardHeader>
               <CardTitle>{project.project_name}</CardTitle>
               <CardDescription>
@@ -68,9 +90,10 @@ export default function ProjectsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-sm">
+              <div className="text-sm space-y-2">
                 <p>API Key: {project.api_key}</p>
                 <p>Project ID: {project.project_id}</p>
+                {project.project_url && <p>URL: {project.project_url}</p>}
               </div>
             </CardContent>
           </Card>
