@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/toaster";
 import ProgressProvider from "@/providers/progress-provider";
 import StoreProvider from "@/providers/store-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
@@ -41,6 +42,7 @@ export default function RootLayout({
           >
             <StoreProvider>
               <ProgressProvider>{children}</ProgressProvider>
+              <Toaster />
             </StoreProvider>
           </ThemeProvider>
         </body>
