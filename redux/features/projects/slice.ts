@@ -5,6 +5,8 @@ const initialState: TInitialState = {
   selectedProject: null,
   projects: [],
   loading: false,
+  groupAnalysis: false,
+  selectedRecordings: [],
 };
 
 const projectsSlice = createSlice({
@@ -20,10 +22,31 @@ const projectsSlice = createSlice({
     setLoading: (state, action) => {
       state.loading = action.payload;
     },
+    setGroupAnalysis: (state, action) => {
+      state.groupAnalysis = action.payload;
+    },
+    pushSelectedRecordings: (state, action) => {
+      state.selectedRecordings = [...state.selectedRecordings, action.payload];
+    },
+    removeSelectedRecordings: (state, action) => {
+      state.selectedRecordings = state.selectedRecordings.filter(
+        (recording) => recording.session_id !== action.payload
+      );
+    },
+    clearSelectedRecordings: (state) => {
+      state.selectedRecordings = [];
+    },
   },
 });
 
-export const { setSelectedProject, setProjects, setLoading } =
-  projectsSlice.actions;
+export const {
+  setSelectedProject,
+  setProjects,
+  setLoading,
+  setGroupAnalysis,
+  pushSelectedRecordings,
+  removeSelectedRecordings,
+  clearSelectedRecordings,
+} = projectsSlice.actions;
 
 export default projectsSlice.reducer;

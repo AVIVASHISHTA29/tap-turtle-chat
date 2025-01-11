@@ -50,8 +50,22 @@ export async function GET(
           viewport_height,
           user_agent,
           referrer
-        FROM recording_sessions
-        WHERE project_id = {projectId:String}
+        FROM (
+          SELECT 
+            session_id,
+            project_id,
+            start_timestamp,
+            end_timestamp,
+            page_url,
+            viewport_width,
+            viewport_height,
+            user_agent,
+            referrer,
+            row_number() OVER (PARTITION BY session_id ORDER BY start_timestamp DESC) as rn
+          FROM recording_sessions
+          WHERE project_id = {projectId:String}
+        )
+        WHERE rn = 1
         ORDER BY start_timestamp DESC
         LIMIT {limit:UInt32}
         OFFSET {offset:UInt32}
@@ -66,7 +80,7 @@ export async function GET(
 
     const countQuery = await clickhouse.query({
       query: `
-        SELECT count(*) as total
+        SELECT count(DISTINCT session_id) as total
         FROM recording_sessions
         WHERE project_id = {projectId:String}
       `,

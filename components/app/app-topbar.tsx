@@ -8,17 +8,32 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import {
+  clearSelectedRecordings,
+  setGroupAnalysis,
+} from "@/redux/features/projects/slice";
+import { RootState } from "@/redux/store";
 import { UserButton } from "@clerk/nextjs";
-import { Bell, ChevronDown, Settings } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Cctv, ChevronDown, Settings, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useSidebar } from "../ui/sidebar";
 
 type AppTopbarProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function AppTopbar({ className, ...props }: AppTopbarProps) {
+  const pathname = usePathname();
   const { state } = useSidebar();
   const router = useRouter();
+  const { groupAnalysis } = useSelector((state: RootState) => state.projects);
+  const dispatch = useDispatch();
+
   const isExpanded = state === "expanded";
+
+  const isRecording = useMemo(() => {
+    return pathname === "/recordings";
+  }, [pathname]);
 
   return (
     <div
@@ -42,26 +57,33 @@ export function AppTopbar({ className, ...props }: AppTopbarProps) {
             isExpanded ? "gap-4" : "gap-2"
           )}
         >
-          <Button
-            variant="ghost"
-            size={isExpanded ? "icon" : "sm"}
-            className="relative hover:bg-muted/50"
-          >
-            <Bell
-              className={cn(
-                "transition-all duration-300",
-                isExpanded ? "h-4 w-4" : "h-3.5 w-3.5"
+          {isRecording && (
+            <>
+              {!groupAnalysis ? (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    dispatch(setGroupAnalysis(true));
+                  }}
+                >
+                  <Cctv className="h-4 w-4" />
+                  Custom AI Analysis
+                </Button>
+              ) : (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    dispatch(setGroupAnalysis(false));
+                    dispatch(clearSelectedRecordings());
+                  }}
+                >
+                  <Cctv className="h-4 w-4" />
+                  Close Custom AI Analysis
+                  <X className="h-4 w-4" />
+                </Button>
               )}
-            />
-            <span
-              className={cn(
-                "absolute rounded-full bg-red-600 transition-all duration-300",
-                isExpanded
-                  ? "right-2 top-2 h-2 w-2"
-                  : "right-1.5 top-1.5 h-1.5 w-1.5"
-              )}
-            />
-          </Button>
+            </>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
