@@ -35,6 +35,10 @@ export function AppTopbar({ className, ...props }: AppTopbarProps) {
     return pathname === "/recordings";
   }, [pathname]);
 
+  const isSpecificRecording = useMemo(() => {
+    return pathname.includes("/recordings/");
+  }, [pathname]);
+
   return (
     <div
       className={cn(
@@ -57,7 +61,7 @@ export function AppTopbar({ className, ...props }: AppTopbarProps) {
             isExpanded ? "gap-4" : "gap-2"
           )}
         >
-          {isRecording && (
+          {isRecording ? (
             <>
               {!groupAnalysis ? (
                 <Button
@@ -83,7 +87,18 @@ export function AppTopbar({ className, ...props }: AppTopbarProps) {
                 </Button>
               )}
             </>
-          )}
+          ) : isSpecificRecording ? (
+            <Button
+              variant="outline"
+              onClick={() => {
+                router.push("/recordings");
+                dispatch(setGroupAnalysis(true));
+              }}
+            >
+              <Cctv className="h-4 w-4" />
+              Custom AI Analysis
+            </Button>
+          ) : null}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

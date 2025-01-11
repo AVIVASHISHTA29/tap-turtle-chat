@@ -121,6 +121,16 @@ export const recordingsApi = createApi({
         url: `/api/projects/${projectId}/recordings/${sessionId}/analysis`,
       }),
     }),
+    getRecordingGroupAnalysis: builder.mutation<
+      { analysis: string },
+      { projectId: string; sessionIds: string[] }
+    >({
+      query: ({ projectId, sessionIds }) => ({
+        url: `/api/projects/${projectId}/recordings/group-analysis`,
+        method: "POST",
+        body: { sessionIds },
+      }),
+    }),
   }),
 });
 
@@ -129,4 +139,5 @@ export const {
   useGetRecordingEventsQuery,
   useGetSessionSummaryQuery,
   useGetRecordingAnalysisMutation,
+  useGetRecordingGroupAnalysisMutation,
 } = recordingsApi;
