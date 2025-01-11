@@ -16,34 +16,76 @@ import { RootState } from "@/redux/store";
 import { UserButton } from "@clerk/nextjs";
 import { Cctv, ChevronDown, Settings, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSidebar } from "../ui/sidebar";
 
 type AppTopbarProps = React.HTMLAttributes<HTMLDivElement>;
 
+const EXPANDED_HEIGHT = "h-16";
+const COLLAPSED_HEIGHT = "h-12";
+
 export function AppTopbar({ className, ...props }: AppTopbarProps) {
   const pathname = usePathname();
   const { state } = useSidebar();
   const router = useRouter();
-  const { groupAnalysis } = useSelector((state: RootState) => state.projects);
   const dispatch = useDispatch();
+  const { groupAnalysis } = useSelector((state: RootState) => state.projects);
 
   const isExpanded = state === "expanded";
+  const heightClass = isExpanded ? EXPANDED_HEIGHT : COLLAPSED_HEIGHT;
 
-  const isRecording = useMemo(() => {
-    return pathname === "/recordings";
-  }, [pathname]);
+  const isRecording = useMemo(() => pathname === "/recordings", [pathname]);
+  const isSpecificRecording = useMemo(
+    () => pathname.includes("/recordings/"),
+    [pathname]
+  );
 
-  const isSpecificRecording = useMemo(() => {
-    return pathname.includes("/recordings/");
-  }, [pathname]);
+  const handleGroupAnalysisToggle = useCallback(() => {
+    dispatch(setGroupAnalysis(!groupAnalysis));
+    if (groupAnalysis) {
+      dispatch(clearSelectedRecordings());
+    }
+  }, [dispatch, groupAnalysis]);
+
+  const handleSpecificRecordingAnalysis = useCallback(() => {
+    router.push("/recordings");
+    dispatch(setGroupAnalysis(true));
+  }, [router, dispatch]);
+
+  const renderAnalysisButton = () => {
+    if (isRecording) {
+      return groupAnalysis ? (
+        <Button variant="destructive" onClick={handleGroupAnalysisToggle}>
+          <Cctv className="h-4 w-4" />
+          Close Custom AI Analysis
+          <X className="h-4 w-4" />
+        </Button>
+      ) : (
+        <Button variant="outline" onClick={handleGroupAnalysisToggle}>
+          <Cctv className="h-4 w-4" />
+          Custom AI Analysis
+        </Button>
+      );
+    }
+
+    if (isSpecificRecording) {
+      return (
+        <Button variant="outline" onClick={handleSpecificRecordingAnalysis}>
+          <Cctv className="h-4 w-4" />
+          Custom AI Analysis
+        </Button>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div
       className={cn(
         "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300 ease-in-out",
-        isExpanded ? "h-16" : "h-12",
+        heightClass,
         className
       )}
       {...props}
@@ -61,44 +103,7 @@ export function AppTopbar({ className, ...props }: AppTopbarProps) {
             isExpanded ? "gap-4" : "gap-2"
           )}
         >
-          {isRecording ? (
-            <>
-              {!groupAnalysis ? (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    dispatch(setGroupAnalysis(true));
-                  }}
-                >
-                  <Cctv className="h-4 w-4" />
-                  Custom AI Analysis
-                </Button>
-              ) : (
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    dispatch(setGroupAnalysis(false));
-                    dispatch(clearSelectedRecordings());
-                  }}
-                >
-                  <Cctv className="h-4 w-4" />
-                  Close Custom AI Analysis
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </>
-          ) : isSpecificRecording ? (
-            <Button
-              variant="outline"
-              onClick={() => {
-                router.push("/recordings");
-                dispatch(setGroupAnalysis(true));
-              }}
-            >
-              <Cctv className="h-4 w-4" />
-              Custom AI Analysis
-            </Button>
-          ) : null}
+          {renderAnalysisButton()}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
