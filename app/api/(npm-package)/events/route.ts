@@ -5,6 +5,22 @@ import * as pako from "pako";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
+// CORS headers configuration
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Content-Encoding, Authorization",
+};
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: corsHeaders,
+  });
+}
+
 const eventTypeEnum = z.enum([
   EventType.CLICK,
   EventType.MOUSE_MOVE,
@@ -145,13 +161,13 @@ export async function POST(req: NextRequest) {
       format: "JSONEachRow",
     });
 
-    return NextResponse.json({ status: "success" });
+    return NextResponse.json({ status: "success" }, { headers: corsHeaders });
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error("Validation Error:", error.errors);
       return NextResponse.json(
         { error: "Invalid payload", details: error.errors },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
     console.error("Error processing request:", error);
@@ -160,7 +176,7 @@ export async function POST(req: NextRequest) {
         error: "Internal Server Error",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
