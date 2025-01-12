@@ -88,3 +88,30 @@ ORDER BY (user_id, project_id);
 
 -- Modify user_projects table to add DEFAULT now() to created_at
 ALTER TABLE user_projects MODIFY COLUMN created_at DateTime DEFAULT now(); 
+
+
+CREATE TABLE observability_sessions (
+  session_id String,
+  project_id String,
+  start_timestamp DateTime,
+  user_agent String,
+  referrer String
+)
+ENGINE = MergeTree()
+ORDER BY session_id;
+
+CREATE TABLE observability_events (
+  event_id String,
+  session_id String,
+  project_id String,
+  event_type String,
+  method String,
+  url String,
+  status UInt16,
+  headers String,
+  body String,
+  timestamp DateTime
+)
+ENGINE = MergeTree()
+ORDER BY timestamp;
+
