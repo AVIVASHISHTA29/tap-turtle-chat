@@ -29,6 +29,7 @@ const observabilityEventSchema = z.object({
   status: z.number().nullable(),
   headers: z.string().nullable(),
   body: z.string().nullable(),
+  payload: z.string().nullable().optional(),
   timestamp: z.string(),
 });
 
@@ -105,6 +106,7 @@ export async function POST(req: NextRequest) {
       status: event.status,
       headers: event.headers,
       body: event.body,
+      payload: event.method?.toUpperCase() !== "GET" ? event.payload : null,
       timestamp: event.timestamp,
     }));
 

@@ -110,6 +110,7 @@ CREATE TABLE observability_events (
   status UInt16,
   headers String,
   body String,
+  payload String,
   timestamp DateTime
 )
 ENGINE = MergeTree()
