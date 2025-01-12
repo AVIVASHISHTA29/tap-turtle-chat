@@ -1,13 +1,19 @@
 "use client";
 
 import SessionCard from "@/components/app/recording/session-card";
+import { TimeFilter } from "@/components/app/recording/time-filter";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSidebar } from "@/components/ui/sidebar";
+import {
+  clearSelectedRecordings,
+  setAllSelectedRecordings,
+} from "@/redux/features/projects/slice";
 import { useGetRecordingSessionsQuery } from "@/redux/features/recordings/api";
 import { RootState } from "@/redux/store";
-import { Inbox, Loader2 } from "lucide-react";
+import { FileSearch, Inbox, Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -31,16 +37,23 @@ export default function RecordingsLayout({
 }) {
   const { state } = useSidebar();
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const { selectedProject, groupAnalysis } = useSelector(
+  const { selectedProject, groupAnalysis, selectedRecordings } = useSelector(
     (state: RootState) => state.projects
   );
+  const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(0);
+  const [timeFilter, setTimeFilter] = useState<{
+    timeFilter?: "30m" | "1h" | "6h" | "1d" | "1w" | "custom";
+    startDate?: string;
+    endDate?: string;
+  }>({});
 
   const { data, isLoading, isFetching } = useGetRecordingSessionsQuery(
     {
       projectId: selectedProject?.project_id ?? "",
       offset: currentPage * ITEMS_PER_PAGE,
       limit: ITEMS_PER_PAGE,
+      ...timeFilter,
     },
     {
       skip: !selectedProject,
@@ -70,6 +83,11 @@ export default function RecordingsLayout({
     };
   }, [data?.hasMore, isFetching]);
 
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [timeFilter]);
+
   if (!selectedProject) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -85,10 +103,46 @@ export default function RecordingsLayout({
       ? "max-h-[calc(100vh-70px)]"
       : "max-h-[calc(100vh-55px)]";
 
+  const toggleSelectAll = () => {
+    if (data?.sessions?.length === selectedRecordings?.length) {
+      dispatch(clearSelectedRecordings());
+    } else {
+      dispatch(
+        setAllSelectedRecordings(
+          data?.sessions.map((session) => session.session_id)
+        )
+      );
+    }
+  };
+
   return (
     <div className={`flex h-full ${maxHeightClass}`}>
       <aside className="w-80 border-r border-border bg-card">
-        <ScrollArea className="h-full">
+        <div className="flex items-center justify-start gap-4 border-b p-4">
+          <TimeFilter onFilterChange={setTimeFilter} />
+          {groupAnalysis && (
+            <Button
+              variant={
+                data?.sessions?.length === selectedRecordings?.length
+                  ? "destructive"
+                  : "outline"
+              }
+              size="sm"
+              onClick={toggleSelectAll}
+            >
+              {data?.sessions?.length === selectedRecordings?.length ? (
+                <>
+                  <X className="h-4 w-4" /> Deselect All
+                </>
+              ) : (
+                <>
+                  <FileSearch className="h-4 w-4" /> Select All
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+        <ScrollArea className="h-[calc(100%-65px)]">
           <div className="p-4">
             {isLoading ? (
               <LoadingSpinner />

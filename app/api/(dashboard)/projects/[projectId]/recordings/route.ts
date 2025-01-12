@@ -17,6 +17,38 @@ export async function GET(
     const searchParams = req.nextUrl.searchParams;
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = parseInt(searchParams.get("offset") || "0");
+    const timeFilter = searchParams.get("timeFilter");
+
+    // Add time filter condition
+    let timeCondition = "";
+    // const now = new Date().toISOString();
+
+    if (timeFilter) {
+      switch (timeFilter) {
+        case "30m":
+          timeCondition = "AND start_timestamp >= subtractMinutes(now(), 30)";
+          break;
+        case "1h":
+          timeCondition = "AND start_timestamp >= subtractHours(now(), 1)";
+          break;
+        case "6h":
+          timeCondition = "AND start_timestamp >= subtractHours(now(), 6)";
+          break;
+        case "1d":
+          timeCondition = "AND start_timestamp >= subtractDays(now(), 1)";
+          break;
+        case "1w":
+          timeCondition = "AND start_timestamp >= subtractDays(now(), 7)";
+          break;
+        case "custom":
+          const startDate = searchParams.get("startDate");
+          const endDate = searchParams.get("endDate");
+          if (startDate && endDate) {
+            timeCondition = `AND start_timestamp BETWEEN '${startDate}' AND '${endDate}'`;
+          }
+          break;
+      }
+    }
 
     // Verify user has access to this project
     const accessResult = await clickhouse.query({
@@ -64,6 +96,7 @@ export async function GET(
             row_number() OVER (PARTITION BY session_id ORDER BY start_timestamp DESC) as rn
           FROM recording_sessions
           WHERE project_id = {projectId:String}
+          ${timeCondition}
         )
         WHERE rn = 1
         ORDER BY start_timestamp DESC
@@ -83,6 +116,7 @@ export async function GET(
         SELECT count(DISTINCT session_id) as total
         FROM recording_sessions
         WHERE project_id = {projectId:String}
+        ${timeCondition}
       `,
       query_params: {
         projectId,

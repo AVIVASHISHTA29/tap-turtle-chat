@@ -77,14 +77,30 @@ export const recordingsApi = createApi({
   endpoints: (builder) => ({
     getRecordingSessions: builder.query<
       RecordingSessionsResponse,
-      { projectId: string; offset: number; limit: number }
+      {
+        projectId: string;
+        offset: number;
+        limit: number;
+        timeFilter?: "30m" | "1h" | "6h" | "1d" | "1w" | "custom";
+        startDate?: string;
+        endDate?: string;
+      }
     >({
-      query: ({ projectId, offset, limit }) => ({
+      query: ({
+        projectId,
+        offset,
+        limit,
+        timeFilter,
+        startDate,
+        endDate,
+      }) => ({
         url: `/api/projects/${projectId}/recordings`,
-        params: { offset, limit },
+        params: { offset, limit, timeFilter, startDate, endDate },
       }),
       serializeQueryArgs: ({ endpointName, queryArgs }) => {
-        return `${endpointName}-${queryArgs.projectId}`;
+        return `${endpointName}-${queryArgs.projectId}-${
+          queryArgs.timeFilter || "all"
+        }-${queryArgs.startDate || ""}-${queryArgs.endDate || ""}`;
       },
       merge: (currentCache, newItems) => {
         return {
@@ -94,7 +110,12 @@ export const recordingsApi = createApi({
         };
       },
       forceRefetch({ currentArg, previousArg }) {
-        return currentArg?.offset !== previousArg?.offset;
+        return (
+          currentArg?.offset !== previousArg?.offset ||
+          currentArg?.timeFilter !== previousArg?.timeFilter ||
+          currentArg?.startDate !== previousArg?.startDate ||
+          currentArg?.endDate !== previousArg?.endDate
+        );
       },
     }),
     getRecordingEvents: builder.query<

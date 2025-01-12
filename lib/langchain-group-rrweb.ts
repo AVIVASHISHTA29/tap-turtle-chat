@@ -293,7 +293,7 @@ function analyzeDOMSnapshots(
 
 export const initRRWebGroupAnalysis = async () => {
   const llm = new ChatOpenAI({
-    modelName: "gpt-4o",
+    modelName: "gpt-4",
     temperature: 0,
   });
 
@@ -306,6 +306,8 @@ export const initRRWebGroupAnalysis = async () => {
     User Interactions:
     {sessionData}
 
+    Time Period: {timePeriod}
+
     Remember to:
     - Keep each section concise but informative
     - Use bullet points and numbered lists for better readability
@@ -313,10 +315,11 @@ export const initRRWebGroupAnalysis = async () => {
     - Focus on actionable insights
     - Avoid technical jargon unless necessary
     - Give spacing and line breaks to make the report more readable
+    - Consider the time period in your analysis and highlight any time-based patterns
 
     Create a detailed markdown analysis with the following structure:
 
-    # Session Analysis Report
+    # Session Analysis Report for {timePeriod}
 
     ## 📄 Page Overview
     - **Type**: [Type of page (e.g., Landing, Product, Dashboard)]
@@ -324,14 +327,16 @@ export const initRRWebGroupAnalysis = async () => {
     - **Key Content**: [Important headings or content elements]
 
     ## ⏱️ Session Summary
-    - **Duration**: [Session duration]
+    - **Time Period**: {timePeriod}
+    - **Total Sessions**: [Number of sessions analyzed]
     - **Total Interactions**: [Number of interactions]
-    - **Engagement Level**: [High/Medium/Low based on interaction density]
+    - **Average Session Duration**: [Average duration]
+    - **Peak Usage Times**: [If any patterns are visible]
 
-    ## 🔍 User Journey
-    1. [First significant action]
-    2. [Next significant action]
-    3. [Continue with key actions...]
+    ## 🔍 User Journey Analysis
+    1. [First significant pattern]
+    2. [Next significant pattern]
+    3. [Continue with key patterns...]
 
     ## 🎯 Engagement Analysis
     ### Most Engaged Areas
@@ -343,6 +348,11 @@ export const initRRWebGroupAnalysis = async () => {
     - [Pattern 1]
     - [Pattern 2]
     - [Pattern 3]
+
+    ### Time-based Patterns
+    - [Time pattern 1]
+    - [Time pattern 2]
+    - [Time pattern 3]
 
     ## 💡 UX Insights
     ### Positive Findings
@@ -362,13 +372,34 @@ export const initRRWebGroupAnalysis = async () => {
 
   const analysisChain = RunnableSequence.from([
     {
-      sessionData: async (input: { sessionIds: string[] }) => {
+      sessionData: async (input: {
+        sessionIds: string[];
+        timeFilter?: string;
+      }) => {
         const events = await fetchSessionEvents(input.sessionIds);
         return JSON.stringify(processEventsForAnalysis(events), null, 2);
       },
       domData: async (input: { sessionIds: string[] }) => {
         const domAnalysis = await fetchDOMSnapshots(input.sessionIds);
         return JSON.stringify(domAnalysis, null, 2);
+      },
+      timePeriod: (input: { timeFilter?: string }) => {
+        switch (input.timeFilter) {
+          case "30m":
+            return "Last 30 Minutes";
+          case "1h":
+            return "Last Hour";
+          case "6h":
+            return "Last 6 Hours";
+          case "1d":
+            return "Last 24 Hours";
+          case "1w":
+            return "Last Week";
+          case "custom":
+            return "Custom Time Range";
+          default:
+            return "All Time";
+        }
       },
     },
     analysisPrompt,

@@ -2,13 +2,14 @@ import { initRRWebGroupAnalysis } from "@/lib/langchain-group-rrweb";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const { sessionIds } = await req.json();
+  const { sessionIds, timeFilter } = await req.json();
 
   try {
     const { analysisChain } = await initRRWebGroupAnalysis();
 
     const analysis = await analysisChain.invoke({
       sessionIds,
+      timeFilter,
     });
 
     return NextResponse.json({ analysis });

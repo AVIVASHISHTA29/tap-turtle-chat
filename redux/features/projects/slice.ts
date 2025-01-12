@@ -36,6 +36,9 @@ const projectsSlice = createSlice({
     clearSelectedRecordings: (state) => {
       state.selectedRecordings = [];
     },
+    setAllSelectedRecordings: (state, action) => {
+      state.selectedRecordings = action.payload;
+    },
   },
 });
 
@@ -47,6 +50,7 @@ export const {
   pushSelectedRecordings,
   removeSelectedRecordings,
   clearSelectedRecordings,
+  setAllSelectedRecordings,
 } = projectsSlice.actions;
 
 export default projectsSlice.reducer;
