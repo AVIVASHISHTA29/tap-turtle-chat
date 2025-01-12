@@ -1,6 +1,6 @@
 "use client";
 
-import { Bug, ChartArea, House, Video } from "lucide-react";
+import { ChartArea, House, Monitor, Video } from "lucide-react";
 
 import {
   Sidebar,
@@ -46,9 +46,9 @@ const items: SidebarItems[] = [
     icon: Video,
   },
   {
-    title: "API Errors",
+    title: "API Monitoring",
     url: "/errors",
-    icon: Bug,
+    icon: Monitor,
   },
 ];
 
