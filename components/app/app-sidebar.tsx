@@ -1,6 +1,6 @@
 "use client";
 
-import { ChartArea, House, Video } from "lucide-react";
+import { Bug, ChartArea, House, Video } from "lucide-react";
 
 import {
   Sidebar,
@@ -44,6 +44,11 @@ const items: SidebarItems[] = [
     title: "Recordings",
     url: "/recordings",
     icon: Video,
+  },
+  {
+    title: "Errors",
+    url: "/errors",
+    icon: Bug,
   },
 ];
 
