@@ -46,7 +46,7 @@ const items: SidebarItems[] = [
     icon: Video,
   },
   {
-    title: "Errors",
+    title: "API Errors",
     url: "/errors",
     icon: Bug,
   },

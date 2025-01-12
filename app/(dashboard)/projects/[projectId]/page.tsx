@@ -121,13 +121,19 @@ export default function ProjectDetailsPage() {
   }
 
   const installCommand = `npm install @tap-turtle/react`;
-  const initCode = `import { TapTurtleProvider } from '@tap-turtle/react';
+  const initCode = `import React, { useEffect } from 'react';
+import { initializeObservability } from '@tap-turtle/react';
 
 function App() {
+
+  useEffect(() => {
+    initializeObservability({
+      apiKey: "${project.api_key}",
+    });
+  }, []);
+
   return (
-    <TapTurtleProvider apiKey="${project.api_key}">
-      {/* Your app content */}
-    </TapTurtleProvider>
+    <Component/>
   );
 }`;
 
