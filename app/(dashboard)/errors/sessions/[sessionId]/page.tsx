@@ -82,7 +82,7 @@ export default function SessionPage() {
             <TableBody>
               {events?.map((event) => (
                 <TableRow key={event.event_id}>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium capitalize">
                     {event.event_type}
                   </TableCell>
                   <TableCell>{event.method}</TableCell>

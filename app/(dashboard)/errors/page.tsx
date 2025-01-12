@@ -63,7 +63,9 @@ export default function ErrorsPage() {
                   <TableCell className="font-medium">
                     {event.session_id.slice(0, 8)}...
                   </TableCell>
-                  <TableCell>{event.event_type}</TableCell>
+                  <TableCell className="capitalize">
+                    {event.event_type}
+                  </TableCell>
                   <TableCell>{event.method}</TableCell>
                   <TableCell className="max-w-[300px] truncate">
                     {event.url}
