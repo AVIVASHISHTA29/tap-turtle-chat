@@ -8,7 +8,6 @@ import { useGetObservabilitySessionsQuery } from "@/redux/features/observability
 import { RootState } from "@/redux/store";
 import { Activity, FileSearch, List, Loader2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { useSelector } from "react-redux";
 
 const LoadingSpinner = () => (
@@ -41,11 +40,11 @@ export default function ErrorsLayout({
     { skip: !selectedProject }
   );
 
-  useEffect(() => {
-    if (!selectedProject) {
-      router.push("/projects");
-    }
-  }, [selectedProject, router]);
+  // useEffect(() => {
+  //   if (!selectedProject) {
+  //     router.push("/projects");
+  //   }
+  // }, [selectedProject, router]);
 
   if (!selectedProject) {
     return (
