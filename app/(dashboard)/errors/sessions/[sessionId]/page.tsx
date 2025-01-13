@@ -1,13 +1,15 @@
 "use client";
 
 import { EventsTable } from "@/components/app/observability/events-table";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   useGetObservabilityEventsQuery,
   useGetObservabilitySessionsQuery,
 } from "@/redux/features/observability/api";
 import { RootState } from "@/redux/store";
-import { Loader2 } from "lucide-react";
+import { Camera, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useSelector } from "react-redux";
 
@@ -54,6 +56,12 @@ export default function SessionPage() {
             {session?.user_agent && <div>User Agent: {session.user_agent}</div>}
             {session?.referrer && <div>Referrer: {session.referrer}</div>}
           </div>
+          <Link href={`/recordings/${sessionId}`}>
+            <Button variant="outline">
+              <Camera className="w-4 h-4" />
+              View Recording
+            </Button>
+          </Link>
         </CardHeader>
       </Card>
 
