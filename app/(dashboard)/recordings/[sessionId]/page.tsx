@@ -1,9 +1,11 @@
 "use client";
 
+import { EventsTable } from "@/components/app/observability/events-table";
 import { RecordingAnalysis } from "@/components/app/recording/recording-analysis";
 import { RecordingPlayer } from "@/components/app/recording/recording-player";
 import { SessionSummary } from "@/components/app/recording/session-summary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useGetObservabilityEventsQuery } from "@/redux/features/observability/api";
 import {
   useGetRecordingEventsQuery,
   useGetSessionSummaryQuery,
@@ -42,6 +44,17 @@ export default function RecordingSessionPage() {
       }
     );
 
+  const { data: observabilityEvents, isLoading: observabilityLoading } =
+    useGetObservabilityEventsQuery(
+      {
+        projectId: selectedProject?.project_id ?? "",
+        sessionId: sessionId as string,
+      },
+      {
+        skip: !selectedProject || !sessionId || activeTab !== "observability",
+      }
+    );
+
   if (!selectedProject) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -72,6 +85,7 @@ export default function RecordingSessionPage() {
             <TabsTrigger value="recording">Recording</TabsTrigger>
             <TabsTrigger value="summary">Summary</TabsTrigger>
             <TabsTrigger value="analysis">Analysis</TabsTrigger>
+            <TabsTrigger value="observability">Observability</TabsTrigger>
           </TabsList>
 
           <TabsContent value="recording" className="space-y-6">
@@ -93,6 +107,21 @@ export default function RecordingSessionPage() {
               projectId={selectedProject.project_id}
               sessionId={sessionId as string}
             />
+          </TabsContent>
+
+          <TabsContent value="observability" className="space-y-6">
+            {observabilityLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              observabilityEvents && (
+                <EventsTable
+                  events={observabilityEvents}
+                  showSessionId={false}
+                />
+              )
+            )}
           </TabsContent>
         </Tabs>
       </div>
