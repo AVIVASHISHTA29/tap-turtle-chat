@@ -6,7 +6,6 @@ import { auth } from "@clerk/nextjs/server";
 import { streamText } from "ai";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-
 export async function POST(request: Request) {
   try {
     const { userId } = await auth();
@@ -27,6 +26,22 @@ export async function POST(request: Request) {
     }
 
     const lastMessage = messages[messages.length - 1].content;
+    const messageId = uuidv4();
+
+    await clickhouse.insert({
+      table: "chat_messages",
+      values: [
+        {
+          message_id: messageId,
+          conversation_id: conversationId,
+          role: 1,
+          content: lastMessage,
+          tool_invocations: [],
+          timestamp: new Date().toISOString(),
+        },
+      ],
+      format: "JSONEachRow",
+    });
 
     // Initialize LangChain DB connection for analytics
     const { finalChain } = await initLangChainDB();
@@ -34,22 +49,6 @@ export async function POST(request: Request) {
     // Process the query through LangChain
     const analyticsResponse = await finalChain.invoke({
       question: lastMessage,
-    });
-
-    // Save the user message
-    const userMessageId = uuidv4();
-    await clickhouse.insert({
-      table: "chat_messages",
-      values: [
-        {
-          message_id: userMessageId,
-          conversation_id: conversationId,
-          role: "user",
-          content: lastMessage,
-          timestamp: new Date().toISOString(),
-        },
-      ],
-      format: "JSONEachRow",
     });
 
     // Extract visualization data and analysis
@@ -82,23 +81,11 @@ export async function POST(request: Request) {
       console.error("Raw response:", analyticsResponse);
     }
 
-    // Update conversation last modified time
-    await clickhouse.query({
-      query: `
-        ALTER TABLE chat_conversations
-        UPDATE updated_at = now()
-        WHERE conversation_id = {conversationId:UUID}
-      `,
-      query_params: {
-        conversationId,
-      },
-    });
-
     // If we have visualization data, use it to create a visualization
     if (visualizationData) {
       const toolName = visualizationData.type;
       if (toolName && typeof toolName === "string" && toolName in tools) {
-        const response = streamText({
+        const stream = streamText({
           model: openai("gpt-4o-mini"),
           system: `
         You're an expert analyst. You've been given an analysis with data for visualisation.
@@ -116,28 +103,12 @@ export async function POST(request: Request) {
           tools,
         });
 
-        // Save the assistant message
-        const assistantMessageId = uuidv4();
-        await clickhouse.insert({
-          table: "chat_messages",
-          values: [
-            {
-              message_id: assistantMessageId,
-              conversation_id: conversationId,
-              role: "assistant",
-              content: analysis || "No analysis available.",
-              timestamp: new Date().toISOString(),
-            },
-          ],
-          format: "JSONEachRow",
-        });
-
-        return response.toDataStreamResponse();
+        return stream.toDataStreamResponse();
       }
     }
 
     // If no visualization data or invalid tool, just return the analysis
-    const response = streamText({
+    const stream = streamText({
       model: openai("gpt-4o"),
       system: `
         You're an expert analyst. You've been given an analysis with maybe some data for visualisation.
@@ -154,23 +125,7 @@ export async function POST(request: Request) {
       tools,
     });
 
-    // Save the assistant message
-    const assistantMessageId = uuidv4();
-    await clickhouse.insert({
-      table: "chat_messages",
-      values: [
-        {
-          message_id: assistantMessageId,
-          conversation_id: conversationId,
-          role: "assistant",
-          content: analyticsResponse || "No analysis available.",
-          timestamp: new Date().toISOString(),
-        },
-      ],
-      format: "JSONEachRow",
-    });
-
-    return response.toDataStreamResponse();
+    return stream.toDataStreamResponse();
   } catch (error) {
     console.error("Chat API error:", error);
     return new NextResponse(

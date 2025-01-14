@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import clickhouse from "@/lib/clickhouse";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -50,10 +51,14 @@ export async function GET(
     });
 
     const messages = await messagesResult.json();
+    const messagesWithToolInvocations = messages.map((message: any) => ({
+      ...message,
+      toolInvocations: JSON.parse(message.tool_invocations) || [],
+    }));
 
     return NextResponse.json({
       conversation: conversations[0],
-      messages,
+      messages: messagesWithToolInvocations,
     });
   } catch (error) {
     console.error("Error fetching conversation:", error);

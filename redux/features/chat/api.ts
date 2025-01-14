@@ -1,12 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { authenticatedBaseQuery } from "@/redux/app/baseQueries";
 import { createApi } from "@reduxjs/toolkit/query/react";
 
 export interface ChatMessage {
   message_id: string;
   conversation_id: string;
-  role: "user" | "assistant" | "system";
+  role: "user" | "assistant" | "system" | "data";
   content: string;
   timestamp: string;
+  tool_invocations: any[];
 }
 
 export interface ChatConversation {
@@ -80,17 +82,16 @@ export const chatApi = createApi({
       invalidatesTags: ["Conversations"],
     }),
 
-    addMessage: builder.mutation<
-      ChatMessage,
-      { conversationId: string; content: string }
-    >({
-      query: ({ conversationId, content }) => ({
-        url: `/chat/conversations/${conversationId}/messages`,
+    addMessage: builder.mutation<ChatMessage, Partial<ChatMessage>>({
+      query: (message) => ({
+        url: `/chat/conversations/${message.conversation_id}/messages`,
         method: "POST",
-        body: { content },
+        body: {
+          ...message,
+        },
       }),
-      invalidatesTags: (result, error, { conversationId }) => [
-        { type: "Conversations", id: conversationId },
+      invalidatesTags: (result, error, message) => [
+        { type: "Conversations", id: message.conversation_id },
       ],
     }),
   }),

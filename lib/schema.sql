@@ -133,7 +133,8 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     conversation_id UUID,
     role Enum8('user' = 1, 'assistant' = 2, 'system' = 3),
     content String,
-    timestamp DateTime DEFAULT now()
+    timestamp DateTime DEFAULT now(),
+    tool_invocations String DEFAULT '[]'  -- JSON array of tool invocations
 )
 ENGINE = MergeTree()
 ORDER BY (conversation_id, timestamp);

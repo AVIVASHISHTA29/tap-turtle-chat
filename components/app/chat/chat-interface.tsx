@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
+  useAddMessageMutation,
   useGetConversationQuery,
   useGetConversationsQuery,
 } from "@/redux/features/chat/api";
@@ -27,6 +28,8 @@ export function ChatInterface() {
     }
   );
 
+  const [addMessage] = useAddMessageMutation();
+
   const {
     messages,
     input,
@@ -42,6 +45,16 @@ export function ChatInterface() {
     },
     id: conversationId,
     initialMessages: currentConversation?.messages as unknown as Message[],
+    onFinish: async (message) => {
+      // Save the complete message to the database
+      console.log(message);
+      await addMessage({
+        conversation_id: conversationId,
+        content: message.content,
+        role: message.role,
+        tool_invocations: message.toolInvocations || [],
+      });
+    },
   });
 
   const pendingSubmission = useRef<string | null>(null);
