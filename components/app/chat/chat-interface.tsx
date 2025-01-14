@@ -37,6 +37,9 @@ export function ChatInterface() {
     setMessages,
   } = useChat({
     api: "/api/chat",
+    body: {
+      conversationId,
+    },
     id: conversationId,
     initialMessages: currentConversation?.messages as unknown as Message[],
   });
@@ -71,12 +74,12 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full w-full">
       <ChatSidebar conversations={conversations || []} />
       <Card className="flex-1 flex flex-col max-h-screen p-0 rounded-none border-0">
         <div className="flex flex-col h-full">
           <ScrollArea className="flex-1 p-2 md:p-4">
-            {messages.length === 0 && !conversationId && (
+            {messages.length === 0 && (
               <WelcomeSection onExampleClick={handleExampleClick} />
             )}
             {messages.map((message) => (

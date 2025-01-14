@@ -29,8 +29,8 @@ export const EXAMPLE_QUERIES = [
     label: "Page Performance",
     query: "Show me the page performance metrics, by events and sessions",
   },
-  {
-    label: "Heatmap",
-    query: "Show me the heatmap of user interactions",
-  },
+  // {
+  //   label: "Heatmap",
+  //   query: "Show me the heatmap of user interactions",
+  // },
 ] as const;

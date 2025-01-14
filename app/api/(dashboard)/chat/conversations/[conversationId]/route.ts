@@ -20,6 +20,7 @@ export async function GET(
         WHERE conversation_id = {conversationId:UUID}
         AND user_id = {userId:String}
         AND is_deleted = 0
+        ORDER BY created_at DESC
         LIMIT 1
       `,
       query_params: {

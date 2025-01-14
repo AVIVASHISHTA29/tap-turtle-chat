@@ -36,7 +36,9 @@ export function ChatSidebar({ conversations }: ChatSidebarProps) {
   };
 
   return (
-    <div className="w-64 border-r border-border bg-card flex flex-col">
+    <div
+      className={"max-w-64 w-full border-r border-border bg-card flex flex-col"}
+    >
       <div className="p-4">
         <Button onClick={handleNewChat} className="w-full" variant="outline">
           <PlusIcon className="h-4 w-4 mr-2" />

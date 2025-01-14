@@ -11,6 +11,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { formatDistanceToNow } from "date-fns";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -26,8 +27,10 @@ export function ChatSidebarItem({
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(conversation.title);
-  const [updateConversation] = useUpdateConversationMutation();
-  const [deleteConversation] = useDeleteConversationMutation();
+  const [updateConversation, { isLoading: isUpdatingConversation }] =
+    useUpdateConversationMutation();
+  const [deleteConversation, { isLoading: isDeletingConversation }] =
+    useDeleteConversationMutation();
 
   const handleClick = () => {
     router.push(`/chat/${conversation.conversation_id}`);
@@ -60,12 +63,12 @@ export function ChatSidebarItem({
 
   return (
     <div
-      className={`group rounded-lg p-3 hover:bg-accent transition-colors ${
+      className={`w-full group rounded-lg p-2 hover:bg-accent transition-colors border ${
         isActive ? "bg-accent" : ""
       }`}
     >
       <div className="flex items-center gap-3">
-        <ChatBubbleLeftIcon className="h-5 w-5 text-muted-foreground" />
+        <ChatBubbleLeftIcon className="h-4 w-4 text-muted-foreground" />
         <div className="flex-1 min-w-0">
           {isEditing ? (
             <Input
@@ -76,13 +79,16 @@ export function ChatSidebarItem({
                   handleEdit();
                 }
               }}
-              className="h-6 text-sm"
+              onBlur={() => {
+                handleEdit();
+              }}
+              className="h-6 text-xs"
               autoFocus
             />
           ) : (
             <Button
               variant="ghost"
-              className="w-full justify-start p-0 h-6 text-sm font-normal"
+              className="w-full justify-start p-0 h-6 text-xs font-normal"
               onClick={handleClick}
             >
               <span className="truncate">{conversation.title}</span>
@@ -100,16 +106,26 @@ export function ChatSidebarItem({
             size="icon"
             className="h-6 w-6"
             onClick={handleEdit}
+            disabled={isUpdatingConversation}
           >
-            <PencilIcon className="h-4 w-4" />
+            {isUpdatingConversation ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <PencilIcon className="h-4 w-4" />
+            )}
           </Button>
           <Button
             variant="ghost"
             size="icon"
             className="h-6 w-6"
             onClick={handleDelete}
+            disabled={isDeletingConversation}
           >
-            <TrashIcon className="h-4 w-4" />
+            {isDeletingConversation ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <TrashIcon className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>

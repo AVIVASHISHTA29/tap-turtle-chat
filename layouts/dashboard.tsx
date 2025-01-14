@@ -38,7 +38,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           ) : (
-            <main className={cn("flex-1 space-y-4 md:p-8 pt-2")}>
+            <main className={cn("flex-1 space-y-4 md:p-8 pt-2 w-full")}>
               {children}
             </main>
           )}

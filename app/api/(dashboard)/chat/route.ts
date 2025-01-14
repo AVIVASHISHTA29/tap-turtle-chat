@@ -14,7 +14,18 @@ export async function POST(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { messages, id: conversationId } = await request.json();
+    const { messages, conversationId } = await request.json();
+
+    if (!conversationId) {
+      return new NextResponse(
+        JSON.stringify({
+          error: "Bad Request",
+          details: "conversation_id is required",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const lastMessage = messages[messages.length - 1].content;
 
     // Initialize LangChain DB connection for analytics
@@ -27,18 +38,18 @@ export async function POST(request: Request) {
 
     // Save the user message
     const userMessageId = uuidv4();
-    await clickhouse.query({
-      query: `
-        INSERT INTO chat_messages
-        (message_id, conversation_id, role, content)
-        VALUES
-        ({messageId:UUID}, {conversationId:UUID}, 'user', {content:String})
-      `,
-      query_params: {
-        messageId: userMessageId,
-        conversationId,
-        content: lastMessage,
-      },
+    await clickhouse.insert({
+      table: "chat_messages",
+      values: [
+        {
+          message_id: userMessageId,
+          conversation_id: conversationId,
+          role: "user",
+          content: lastMessage,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+      format: "JSONEachRow",
     });
 
     // Extract visualization data and analysis
@@ -107,18 +118,18 @@ export async function POST(request: Request) {
 
         // Save the assistant message
         const assistantMessageId = uuidv4();
-        await clickhouse.query({
-          query: `
-            INSERT INTO chat_messages
-            (message_id, conversation_id, role, content)
-            VALUES
-            ({messageId:UUID}, {conversationId:UUID}, 'assistant', {content:String})
-          `,
-          query_params: {
-            messageId: assistantMessageId,
-            conversationId,
-            content: analysis || "No analysis available.",
-          },
+        await clickhouse.insert({
+          table: "chat_messages",
+          values: [
+            {
+              message_id: assistantMessageId,
+              conversation_id: conversationId,
+              role: "assistant",
+              content: analysis || "No analysis available.",
+              timestamp: new Date().toISOString(),
+            },
+          ],
+          format: "JSONEachRow",
         });
 
         return response.toDataStreamResponse();
@@ -145,18 +156,18 @@ export async function POST(request: Request) {
 
     // Save the assistant message
     const assistantMessageId = uuidv4();
-    await clickhouse.query({
-      query: `
-        INSERT INTO chat_messages
-        (message_id, conversation_id, role, content)
-        VALUES
-        ({messageId:UUID}, {conversationId:UUID}, 'assistant', {content:String})
-      `,
-      query_params: {
-        messageId: assistantMessageId,
-        conversationId,
-        content: analyticsResponse || "No analysis available.",
-      },
+    await clickhouse.insert({
+      table: "chat_messages",
+      values: [
+        {
+          message_id: assistantMessageId,
+          conversation_id: conversationId,
+          role: "assistant",
+          content: analyticsResponse || "No analysis available.",
+          timestamp: new Date().toISOString(),
+        },
+      ],
+      format: "JSONEachRow",
     });
 
     return response.toDataStreamResponse();
