@@ -116,3 +116,25 @@ CREATE TABLE observability_events (
 ENGINE = MergeTree()
 ORDER BY timestamp;
 
+CREATE TABLE IF NOT EXISTS chat_conversations (
+    conversation_id UUID,
+    user_id String,           -- Clerk user ID
+    project_id UUID,          -- Link to project
+    title String,             -- Title of the conversation
+    created_at DateTime DEFAULT now(),
+    updated_at DateTime DEFAULT now(),
+    is_deleted UInt8 DEFAULT 0
+)
+ENGINE = MergeTree()
+ORDER BY (user_id, conversation_id);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    message_id UUID,
+    conversation_id UUID,
+    role Enum8('user' = 1, 'assistant' = 2, 'system' = 3),
+    content String,
+    timestamp DateTime DEFAULT now()
+)
+ENGINE = MergeTree()
+ORDER BY (conversation_id, timestamp);
+

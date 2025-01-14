@@ -1,20 +1,12 @@
 import { tools } from "@/ai/tools";
-import clickhouse from "@/lib/clickhouse";
 import { initLangChainDB } from "@/lib/langchain-db";
 import { openai } from "@ai-sdk/openai";
-import { auth } from "@clerk/nextjs/server";
 import { streamText } from "ai";
 import { NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const { messages, id: conversationId } = await request.json();
+    const { messages } = await request.json();
     const lastMessage = messages[messages.length - 1].content;
 
     // Initialize LangChain DB connection for analytics
@@ -23,22 +15,6 @@ export async function POST(request: Request) {
     // Process the query through LangChain
     const analyticsResponse = await finalChain.invoke({
       question: lastMessage,
-    });
-
-    // Save the user message
-    const userMessageId = uuidv4();
-    await clickhouse.query({
-      query: `
-        INSERT INTO chat_messages
-        (message_id, conversation_id, role, content)
-        VALUES
-        ({messageId:UUID}, {conversationId:UUID}, 'user', {content:String})
-      `,
-      query_params: {
-        messageId: userMessageId,
-        conversationId,
-        content: lastMessage,
-      },
     });
 
     // Extract visualization data and analysis
@@ -71,23 +47,11 @@ export async function POST(request: Request) {
       console.error("Raw response:", analyticsResponse);
     }
 
-    // Update conversation last modified time
-    await clickhouse.query({
-      query: `
-        ALTER TABLE chat_conversations
-        UPDATE updated_at = now()
-        WHERE conversation_id = {conversationId:UUID}
-      `,
-      query_params: {
-        conversationId,
-      },
-    });
-
     // If we have visualization data, use it to create a visualization
     if (visualizationData) {
       const toolName = visualizationData.type;
       if (toolName && typeof toolName === "string" && toolName in tools) {
-        const response = streamText({
+        return streamText({
           model: openai("gpt-4o-mini"),
           system: `
         You're an expert analyst. You've been given an analysis with data for visualisation.
@@ -103,30 +67,12 @@ export async function POST(request: Request) {
             },
           ],
           tools,
-        });
-
-        // Save the assistant message
-        const assistantMessageId = uuidv4();
-        await clickhouse.query({
-          query: `
-            INSERT INTO chat_messages
-            (message_id, conversation_id, role, content)
-            VALUES
-            ({messageId:UUID}, {conversationId:UUID}, 'assistant', {content:String})
-          `,
-          query_params: {
-            messageId: assistantMessageId,
-            conversationId,
-            content: analysis || "No analysis available.",
-          },
-        });
-
-        return response.toDataStreamResponse();
+        }).toDataStreamResponse();
       }
     }
 
     // If no visualization data or invalid tool, just return the analysis
-    const response = streamText({
+    return streamText({
       model: openai("gpt-4o"),
       system: `
         You're an expert analyst. You've been given an analysis with maybe some data for visualisation.
@@ -141,25 +87,7 @@ export async function POST(request: Request) {
         },
       ],
       tools,
-    });
-
-    // Save the assistant message
-    const assistantMessageId = uuidv4();
-    await clickhouse.query({
-      query: `
-        INSERT INTO chat_messages
-        (message_id, conversation_id, role, content)
-        VALUES
-        ({messageId:UUID}, {conversationId:UUID}, 'assistant', {content:String})
-      `,
-      query_params: {
-        messageId: assistantMessageId,
-        conversationId,
-        content: analyticsResponse || "No analysis available.",
-      },
-    });
-
-    return response.toDataStreamResponse();
+    }).toDataStreamResponse();
   } catch (error) {
     console.error("Chat API error:", error);
     return new NextResponse(
