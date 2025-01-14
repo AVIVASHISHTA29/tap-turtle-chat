@@ -91,7 +91,7 @@ export function ChatSidebarItem({
               className="w-full justify-start p-0 h-6 text-xs font-normal"
               onClick={handleClick}
             >
-              <span className="truncate">{conversation.title}</span>
+              <span className="truncate">{title || conversation.title}</span>
             </Button>
           )}
           <div className="text-xs text-muted-foreground">

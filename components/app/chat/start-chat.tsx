@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { BotIcon, Loader2 } from "lucide-react";
 
 interface StartChatProps {
   startChat: () => void;
@@ -23,7 +23,11 @@ export function StartChat({ startChat, isLoading }: StartChatProps) {
         onClick={startChat}
         disabled={isLoading}
       >
-        {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : (
+          <BotIcon className="w-4 h-4" />
+        )}
         Start Chat
       </Button>
     </div>
