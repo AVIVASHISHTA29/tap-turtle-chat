@@ -27,21 +27,24 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
   }, [data, isLoading, dispatch]);
 
+  if (isLoading) {
+    return (
+      <div className="fixed h-screen w-screen flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <div className="relative flex min-h-screen w-full">
         <AppSidebar className="fixed inset-y-0 z-50" />
         <div className="flex flex-1 flex-col w-full">
           <AppTopbar />
-          {isLoading ? (
-            <div className="flex flex-1 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
-          ) : (
-            <main className={cn("flex-1 space-y-4 md:p-8 pt-2 w-full")}>
-              {children}
-            </main>
-          )}
+
+          <main className={cn("flex-1 space-y-4 md:p-8 pt-2 w-full")}>
+            {children}
+          </main>
         </div>
       </div>
     </SidebarProvider>
