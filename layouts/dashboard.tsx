@@ -29,7 +29,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="fixed h-screen w-screen flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin" />
       </div>
     );

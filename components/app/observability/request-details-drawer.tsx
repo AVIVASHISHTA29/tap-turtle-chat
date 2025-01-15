@@ -101,7 +101,7 @@ export function RequestDetailsDrawer({
                       <div>
                         <h4 className="text-sm font-medium mb-2">Headers</h4>
                         <ScrollArea className=" h-[200px] w-full rounded-md border p-4 ">
-                          {JSON.parse(event.headers)}
+                          {JSON.stringify(JSON.parse(event.headers), null, 2)}
                         </ScrollArea>
                       </div>
                     )}
@@ -111,7 +111,7 @@ export function RequestDetailsDrawer({
                           Request Data
                         </h4>
                         <ScrollArea className=" h-[200px] max-w-[200px] w-full rounded-md border p-4 ">
-                          {JSON.parse(event.payload)}
+                          {JSON.stringify(JSON.parse(event.payload), null, 2)}
                         </ScrollArea>
                       </div>
                     )}
@@ -132,7 +132,7 @@ export function RequestDetailsDrawer({
                           Response Data
                         </h4>
                         <ScrollArea className=" h-[200px] w-full rounded-md border p-4 ">
-                          {JSON.parse(event.body)}
+                          {JSON.stringify(JSON.parse(event.body), null, 2)}
                         </ScrollArea>
                       </div>
                     )}
