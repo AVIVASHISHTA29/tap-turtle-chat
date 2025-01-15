@@ -114,6 +114,8 @@ export default function ProjectDetailsPage() {
     }
   };
 
+  console.log("handleDelete", handleDelete);
+
   const copyToClipboard = (text: string, description: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -267,7 +269,13 @@ function App() {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={handleDelete}
+                        onClick={() => {
+                          toast({
+                            title: "Delete project",
+                            description:
+                              "Are you sure you want to delete this project?",
+                          });
+                        }}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         disabled={isDeleting}
                       >
