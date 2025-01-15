@@ -1,11 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import HeatmapOverlay from "@/components/app/heatmap/heatmap-overlay";
+// import HeatmapOverlay from "@/components/app/heatmap/heatmap-overlay";
 import { useGetHeatmapDataQuery } from "@/redux/features/heatmap/api";
 import { RootState } from "@/redux/store";
 import { Loader } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+
+const HeatmapOverlay = dynamic(
+  () => import("@/components/app/heatmap/heatmap-overlay"),
+  { ssr: false }
+);
 
 const App = () => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
