@@ -65,7 +65,7 @@ export function ChatSidebarItem({
     <div
       className={`w-full group rounded-lg p-2 hover:bg-accent transition-colors border ${
         isActive ? "bg-accent" : ""
-      }`}
+      } ${isEditing ? "cursor-text" : "cursor-pointer"}`}
       onClick={isEditing ? () => {} : handleClick}
     >
       <div className="flex items-center gap-3">
