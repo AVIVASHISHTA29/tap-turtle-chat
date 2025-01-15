@@ -117,7 +117,7 @@ export default function RecordingSessionPage() {
             ) : (
               observabilityEvents && (
                 <EventsTable
-                  events={observabilityEvents}
+                  events={observabilityEvents.events}
                   showSessionId={false}
                 />
               )

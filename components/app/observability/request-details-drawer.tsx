@@ -91,7 +91,7 @@ export function RequestDetailsDrawer({
               <TabsTrigger value="response">Response</TabsTrigger>
             </TabsList>
             <TabsContent value="request">
-              <Card className="overflow-auto">
+              <Card>
                 <CardHeader>
                   <CardTitle>Request Details</CardTitle>
                 </CardHeader>
@@ -100,8 +100,8 @@ export function RequestDetailsDrawer({
                     {event.headers && (
                       <div>
                         <h4 className="text-sm font-medium mb-2">Headers</h4>
-                        <ScrollArea className="h-[200px] rounded-md border p-4">
-                          <pre className="text-sm">
+                        <ScrollArea className="h-[200px] w-full rounded-md border">
+                          <pre className="text-sm p-4">
                             {JSON.stringify(JSON.parse(event.headers), null, 2)}
                           </pre>
                         </ScrollArea>
@@ -112,8 +112,8 @@ export function RequestDetailsDrawer({
                         <h4 className="text-sm font-medium mb-2">
                           Request Data
                         </h4>
-                        <ScrollArea className="h-[200px] rounded-md border p-4">
-                          <pre className="text-sm">
+                        <ScrollArea className="h-[200px] w-full rounded-md border">
+                          <pre className="text-sm p-4">
                             {JSON.stringify(JSON.parse(event.payload), null, 2)}
                           </pre>
                         </ScrollArea>
@@ -124,19 +124,19 @@ export function RequestDetailsDrawer({
               </Card>
             </TabsContent>
             <TabsContent value="response">
-              <Card className="overflow-auto">
+              <Card>
                 <CardHeader>
                   <CardTitle>Response Details</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4 ">
+                  <div className="space-y-4">
                     {event.body && (
                       <div>
                         <h4 className="text-sm font-medium mb-2">
                           Response Data
                         </h4>
-                        <ScrollArea className="h-[200px] rounded-md border p-4">
-                          <pre className="text-sm">
+                        <ScrollArea className="h-[200px] w-full rounded-md border">
+                          <pre className="text-sm p-4">
                             {JSON.stringify(JSON.parse(event.body), null, 2)}
                           </pre>
                         </ScrollArea>
