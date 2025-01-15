@@ -155,14 +155,14 @@ export default function ProjectDetailsPage() {
     return <div>Project not found</div>;
   }
 
-  const installCommand = `npm install @tap-turtle/react`;
+  const installCommand = `npm i avi-analytics-sdk`;
   const initCode = `import React, { useEffect } from 'react';
-import { initializeObservability } from '@tap-turtle/react';
+import { initializeAnalytics } from 'avi-analytics-sdk';
 
 function App() {
 
   useEffect(() => {
-    initializeObservability({
+    initializeAnalytics({
       apiKey: "${project.api_key}",
     });
   }, []);
@@ -423,6 +423,8 @@ function App() {
                           `/recordings?project=${project.project_id}`
                         );
                       }}
+                      variant="outline"
+                      className="mt-4"
                     >
                       Go to recordings
                     </Button>
