@@ -17,12 +17,18 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
+  useCreateInvitationMutation,
   useDeleteProjectMutation,
+  useGetProjectInvitationsQuery,
+  useGetProjectMembersQuery,
   useGetProjectsQuery,
   useUpdateProjectMutation,
 } from "@/redux/features/projects/api";
 import { setSelectedProject } from "@/redux/features/projects/slice";
+import { format } from "date-fns";
 import {
   ArrowLeft,
   Check,
@@ -31,6 +37,7 @@ import {
   Loader2,
   Pencil,
   Trash2,
+  Users,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -50,6 +57,13 @@ export default function ProjectDetailsPage() {
   const [editMode, setEditMode] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [projectUrl, setProjectUrl] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [createInvitation, { isLoading: isInviting }] =
+    useCreateInvitationMutation();
+  const { data: invitations, isLoading: isLoadingInvitations } =
+    useGetProjectInvitationsQuery(projectId);
+  const { data: members, isLoading: isLoadingMembers } =
+    useGetProjectMembersQuery(projectId);
 
   useEffect(() => {
     if (project) {
@@ -106,6 +120,27 @@ export default function ProjectDetailsPage() {
       title: "Copied to clipboard",
       description,
     });
+  };
+
+  const handleInvite = async () => {
+    try {
+      await createInvitation({
+        projectId,
+        data: { email: inviteEmail.trim() },
+      }).unwrap();
+      setInviteEmail("");
+      toast({
+        title: "Invitation sent",
+        description: "An email invitation has been sent to the user.",
+      });
+    } catch (error) {
+      console.error("Failed to send invitation:", error);
+      toast({
+        title: "Failed to send invitation",
+        description: "There was an error sending the invitation.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -393,6 +428,128 @@ function App() {
                     </Button>
                   </div>
                 </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Project Members
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingMembers ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : members && members.length > 0 ? (
+              <div className="space-y-4">
+                {members.map((member) => (
+                  <div
+                    key={member.user_id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div>
+                      <p className="font-medium">{member.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {member.email}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm text-muted-foreground">
+                        Joined {format(new Date(member.created_at), "PP")}
+                      </span>
+                      <Badge
+                        variant={member.role === 1 ? "default" : "secondary"}
+                      >
+                        {member.role === 1 ? "Owner" : "Member"}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-6">
+                No members found
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Team Members</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="invite" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="invite">Invite Members</TabsTrigger>
+                <TabsTrigger value="pending">Pending Invitations</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="invite" className="space-y-4">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email address</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="email"
+                        placeholder="colleague@company.com"
+                        type="email"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                      />
+                      <Button
+                        onClick={handleInvite}
+                        disabled={isInviting || !inviteEmail}
+                      >
+                        {isInviting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Inviting...
+                          </>
+                        ) : (
+                          "Send Invite"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="pending">
+                {isLoadingInvitations ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : invitations && invitations.length > 0 ? (
+                  <div className="space-y-4">
+                    {invitations.map((invitation) => (
+                      <div
+                        key={invitation.invitation_id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div>
+                          <p className="font-medium">{invitation.email}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Invited{" "}
+                            {new Date(
+                              invitation.created_at
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <p className="text-sm text-muted-foreground">Pending</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-6">
+                    No pending invitations
+                  </p>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>

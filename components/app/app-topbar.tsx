@@ -19,6 +19,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSidebar } from "../ui/sidebar";
+import { NotificationsDropdown } from "./notifications-dropdown";
 
 type AppTopbarProps = React.HTMLAttributes<HTMLDivElement>;
 
@@ -104,7 +105,7 @@ export function AppTopbar({ className, ...props }: AppTopbarProps) {
           )}
         >
           {renderAnalysisButton()}
-
+          <NotificationsDropdown isExpanded={isExpanded} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

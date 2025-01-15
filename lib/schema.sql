@@ -139,3 +139,16 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 ENGINE = MergeTree()
 ORDER BY (conversation_id, timestamp);
 
+CREATE TABLE IF NOT EXISTS project_invitations (
+    invitation_id UUID,         -- Unique invitation identifier
+    project_id UUID,           -- Link to project
+    email String,              -- Invitee's email
+    role Enum8('member' = 2),  -- Role they'll have when accepting
+    status Enum8('pending' = 1, 'accepted' = 2, 'rejected' = 3),  -- Invitation status
+    invited_by String,         -- Clerk user ID of inviter
+    created_at DateTime DEFAULT now(),
+    expires_at DateTime        -- When the invitation expires
+)
+ENGINE = MergeTree()
+ORDER BY (project_id, email);
+

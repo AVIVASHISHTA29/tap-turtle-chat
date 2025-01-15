@@ -57,10 +57,31 @@ export interface UpdateProjectRequest {
   project_url?: string;
 }
 
+export interface ProjectInvitation {
+  invitation_id: string;
+  email: string;
+  created_at: string;
+  expires_at: string;
+  status: string;
+  project_name?: string;
+}
+
+export interface CreateInvitationRequest {
+  email: string;
+}
+
+export interface ProjectMember {
+  user_id: string;
+  email: string;
+  name: string;
+  role: number;
+  created_at: string;
+}
+
 export const projectsApi = createApi({
   reducerPath: "projectsApi",
   baseQuery: authenticatedBaseQuery,
-  tagTypes: ["Project"],
+  tagTypes: ["Project", "Invitation", "Member"],
   endpoints: (builder) => ({
     getProjects: builder.query<Project[], void>({
       query: () => "projects",
@@ -95,6 +116,43 @@ export const projectsApi = createApi({
     getProjectAnalytics: builder.query<ProjectAnalytics, string>({
       query: (projectId) => `projects/${projectId}/analytics`,
     }),
+    getProjectInvitations: builder.query<ProjectInvitation[], string>({
+      query: (projectId) => `projects/${projectId}/invitations`,
+      providesTags: ["Invitation"],
+    }),
+    createInvitation: builder.mutation<
+      { invitationId: string },
+      { projectId: string; data: CreateInvitationRequest }
+    >({
+      query: ({ projectId, data }) => ({
+        url: `projects/${projectId}/invitations`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Invitation"],
+    }),
+    getInvitation: builder.query<ProjectInvitation, string>({
+      query: (invitationId) => `projects/invitations/${invitationId}`,
+    }),
+    respondToInvitation: builder.mutation<
+      void,
+      { invitationId: string; action: "accept" | "reject" }
+    >({
+      query: ({ invitationId, action }) => ({
+        url: `projects/invitations/${invitationId}`,
+        method: "POST",
+        body: { action },
+      }),
+      invalidatesTags: ["Project", "Invitation"],
+    }),
+    getUserInvitations: builder.query<ProjectInvitation[], void>({
+      query: () => "projects/invitations/user",
+      providesTags: ["Invitation"],
+    }),
+    getProjectMembers: builder.query<ProjectMember[], string>({
+      query: (projectId) => `projects/${projectId}/members`,
+      providesTags: ["Member"],
+    }),
   }),
 });
 
@@ -104,4 +162,10 @@ export const {
   useUpdateProjectMutation,
   useDeleteProjectMutation,
   useGetProjectAnalyticsQuery,
+  useGetProjectInvitationsQuery,
+  useCreateInvitationMutation,
+  useGetInvitationQuery,
+  useRespondToInvitationMutation,
+  useGetUserInvitationsQuery,
+  useGetProjectMembersQuery,
 } = projectsApi;
