@@ -100,10 +100,8 @@ export function RequestDetailsDrawer({
                     {event.headers && (
                       <div>
                         <h4 className="text-sm font-medium mb-2">Headers</h4>
-                        <ScrollArea className="h-[200px] w-full rounded-md border">
-                          <pre className="text-sm p-4">
-                            {JSON.stringify(JSON.parse(event.headers), null, 2)}
-                          </pre>
+                        <ScrollArea className=" h-[200px] w-full rounded-md border p-4 ">
+                          {JSON.parse(event.headers)}
                         </ScrollArea>
                       </div>
                     )}
@@ -112,10 +110,8 @@ export function RequestDetailsDrawer({
                         <h4 className="text-sm font-medium mb-2">
                           Request Data
                         </h4>
-                        <ScrollArea className="h-[200px] w-full rounded-md border">
-                          <pre className="text-sm p-4">
-                            {JSON.stringify(JSON.parse(event.payload), null, 2)}
-                          </pre>
+                        <ScrollArea className=" h-[200px] max-w-[200px] w-full rounded-md border p-4 ">
+                          {JSON.parse(event.payload)}
                         </ScrollArea>
                       </div>
                     )}
@@ -135,10 +131,8 @@ export function RequestDetailsDrawer({
                         <h4 className="text-sm font-medium mb-2">
                           Response Data
                         </h4>
-                        <ScrollArea className="h-[200px] w-full rounded-md border">
-                          <pre className="text-sm p-4">
-                            {JSON.stringify(JSON.parse(event.body), null, 2)}
-                          </pre>
+                        <ScrollArea className=" h-[200px] w-full rounded-md border p-4 ">
+                          {JSON.parse(event.body)}
                         </ScrollArea>
                       </div>
                     )}
