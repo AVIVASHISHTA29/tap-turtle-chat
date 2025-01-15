@@ -24,10 +24,9 @@ export interface ObservabilityEvent {
 }
 
 export interface ObservabilityResponse {
-  sessions: ObservabilitySession[];
   events: ObservabilityEvent[];
-  total: number;
   hasMore: boolean;
+  nextCursor: string | null;
 }
 
 export const observabilityApi = createApi({
@@ -43,13 +42,15 @@ export const observabilityApi = createApi({
       providesTags: ["Observability"],
     }),
     getObservabilityEvents: builder.query<
-      ObservabilityEvent[],
-      { projectId: string; sessionId?: string }
+      ObservabilityResponse,
+      { projectId: string; sessionId?: string; cursor?: string }
     >({
-      query: ({ projectId, sessionId }) =>
-        sessionId
+      query: ({ projectId, sessionId, cursor }) => {
+        const base = sessionId
           ? `projects/${projectId}/observability/sessions/${sessionId}/events`
-          : `projects/${projectId}/observability/events`,
+          : `projects/${projectId}/observability/events`;
+        return cursor ? `${base}?cursor=${cursor}` : base;
+      },
       providesTags: ["Observability"],
     }),
   }),
