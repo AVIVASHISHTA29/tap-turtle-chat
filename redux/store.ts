@@ -1,11 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import { chatApi } from "./features/chat/api";
+import chatReducer from "./features/chat/slice";
 import { observabilityApi } from "./features/observability/api";
 import { projectsApi } from "./features/projects/api";
 import projectsReducer from "./features/projects/slice";
 import { recordingsApi } from "./features/recordings/api";
-
 export const store = configureStore({
   reducer: {
     [projectsApi.reducerPath]: projectsApi.reducer,
@@ -13,6 +13,7 @@ export const store = configureStore({
     [observabilityApi.reducerPath]: observabilityApi.reducer,
     [chatApi.reducerPath]: chatApi.reducer,
     projects: projectsReducer,
+    chat: chatReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(

@@ -2,11 +2,18 @@
 
 import { ChatSidebar } from "@/components/app/chat/chat-sidebar";
 import { useGetConversationsQuery } from "@/redux/features/chat/api";
+import { RootState } from "@/redux/store";
 import { Loader2 } from "lucide-react";
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 
 function ChatLayout({ children }: { children: React.ReactNode }) {
-  const { data: conversations, isLoading } = useGetConversationsQuery();
+  const selectedProject = useSelector(
+    (state: RootState) => state.projects.selectedProject
+  );
+  const { data: conversations, isLoading } = useGetConversationsQuery({
+    projectId: selectedProject?.project_id ?? "",
+  });
   const [openSidebar, setOpenSidebar] = useState<boolean>(true);
 
   if (isLoading)

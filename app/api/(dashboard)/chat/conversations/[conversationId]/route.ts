@@ -8,6 +8,8 @@ export async function GET(
   { params }: { params: { conversationId: string } }
 ) {
   try {
+    const { searchParams } = new URL(request.url);
+    const projectId = searchParams.get("projectId");
     const { userId } = await auth();
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -19,14 +21,14 @@ export async function GET(
         SELECT *
         FROM chat_conversations
         WHERE conversation_id = {conversationId:UUID}
-        AND user_id = {userId:String}
+        AND project_id = {projectId:String}
         AND is_deleted = 0
         ORDER BY created_at DESC
         LIMIT 1
       `,
       query_params: {
         conversationId: params.conversationId,
-        userId,
+        projectId,
       },
       format: "JSONEachRow",
     });
@@ -71,23 +73,23 @@ export async function PUT(
   { params }: { params: { conversationId: string } }
 ) {
   try {
+    const { title, projectId } = await request.json();
+
     const { userId } = await auth();
-    if (!userId) {
+    if (!userId || !projectId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-
-    const { title } = await request.json();
 
     await clickhouse.query({
       query: `
         ALTER TABLE chat_conversations
         UPDATE title = {title:String}, updated_at = now()
         WHERE conversation_id = {conversationId:UUID}
-        AND user_id = {userId:String}
+        AND project_id = {projectId:String}
       `,
       query_params: {
         conversationId: params.conversationId,
-        userId,
+        projectId,
         title,
       },
     });
@@ -104,8 +106,9 @@ export async function DELETE(
   { params }: { params: { conversationId: string } }
 ) {
   try {
+    const { projectId } = await request.json();
     const { userId } = await auth();
-    if (!userId) {
+    if (!userId || !projectId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -114,11 +117,11 @@ export async function DELETE(
         ALTER TABLE chat_conversations
         UPDATE is_deleted = 1
         WHERE conversation_id = {conversationId:UUID}
-        AND user_id = {userId:String}
+        AND project_id = {projectId:String}
       `,
       query_params: {
         conversationId: params.conversationId,
-        userId,
+        projectId,
       },
     });
 

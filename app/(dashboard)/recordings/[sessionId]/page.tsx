@@ -74,7 +74,7 @@ export default function RecordingSessionPage() {
   }
 
   return (
-    <div className="py-6">
+    <div className="py-6 px-4">
       <div className="max-w-[800px] mx-auto space-y-6">
         <Tabs
           value={activeTab}

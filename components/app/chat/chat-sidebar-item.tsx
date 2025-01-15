@@ -5,6 +5,7 @@ import {
   useDeleteConversationMutation,
   useUpdateConversationMutation,
 } from "@/redux/features/chat/api";
+import { setLoading } from "@/redux/features/chat/slice";
 import {
   ChatBubbleLeftIcon,
   PencilIcon,
@@ -14,6 +15,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
 
 interface ChatSidebarItemProps {
   conversation: ChatConversation;
@@ -32,7 +34,10 @@ export function ChatSidebarItem({
   const [deleteConversation, { isLoading: isDeletingConversation }] =
     useDeleteConversationMutation();
 
+  const dispatch = useDispatch();
+
   const handleClick = () => {
+    dispatch(setLoading(true));
     router.push(`/chat/${conversation.conversation_id}`);
   };
 
@@ -42,6 +47,7 @@ export function ChatSidebarItem({
         await updateConversation({
           conversationId: conversation.conversation_id,
           title,
+          projectId: conversation.project_id,
         }).unwrap();
         setIsEditing(false);
       } catch (error) {
@@ -54,7 +60,10 @@ export function ChatSidebarItem({
 
   const handleDelete = async () => {
     try {
-      await deleteConversation(conversation.conversation_id).unwrap();
+      await deleteConversation({
+        conversationId: conversation.conversation_id,
+        projectId: conversation.project_id,
+      }).unwrap();
       router.push("/chat");
     } catch (error) {
       console.error("Failed to delete conversation:", error);

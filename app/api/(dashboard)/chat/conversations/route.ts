@@ -3,8 +3,10 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const projectId = searchParams.get("projectId");
     const { userId } = await auth();
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -14,12 +16,12 @@ export async function GET() {
       query: `
         SELECT *
         FROM chat_conversations
-        WHERE user_id = {userId:String}
+        WHERE project_id = {projectId:String}
         AND is_deleted = 0
         ORDER BY updated_at DESC
       `,
       query_params: {
-        userId,
+        projectId,
       },
       format: "JSONEachRow",
     });

@@ -6,9 +6,13 @@ import {
   useAddMessageMutation,
   useGetConversationQuery,
 } from "@/redux/features/chat/api";
+import { setLoading } from "@/redux/features/chat/slice";
+import { RootState } from "@/redux/store";
 import { Message, useChat } from "ai/react";
+import { Loader2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { AnalyticsMessage } from "../charts/analytics-message";
 import { ChatInput } from "./chat-input";
 import { LoadingMessage } from "./loading-message";
@@ -17,13 +21,15 @@ import { WelcomeSection } from "./welcome-section";
 export function ChatInterface() {
   const params = useParams();
   const conversationId = params?.conversationId as string;
-
-  const { data: currentConversation } = useGetConversationQuery(
-    conversationId,
-    {
-      skip: !conversationId,
-    }
+  const selectedProject = useSelector(
+    (state: RootState) => state.projects.selectedProject
   );
+  const dispatch = useDispatch();
+  const { data: currentConversation, isLoading: isLoadingConversation } =
+    useGetConversationQuery({
+      conversationId,
+      projectId: selectedProject?.project_id ?? "",
+    });
 
   const [addMessage] = useAddMessageMutation();
 
@@ -82,6 +88,24 @@ export function ChatInterface() {
     setMessages([]);
     reload();
   };
+
+  useEffect(() => {
+    if (isLoadingConversation) {
+      dispatch(setLoading(true));
+    } else {
+      dispatch(setLoading(false));
+    }
+  }, [isLoadingConversation]);
+
+  if (isLoadingConversation) {
+    return (
+      <Card className="h-full flex-1 flex flex-col max-h-screen p-0 rounded-none border-0">
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="h-full flex-1 flex flex-col max-h-screen p-0 rounded-none border-0">

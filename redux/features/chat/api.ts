@@ -25,9 +25,9 @@ export const chatApi = createApi({
   baseQuery: authenticatedBaseQuery,
   tagTypes: ["Conversations"],
   endpoints: (builder) => ({
-    getConversations: builder.query<ChatConversation[], void>({
-      query: () => ({
-        url: "/chat/conversations",
+    getConversations: builder.query<ChatConversation[], { projectId: string }>({
+      query: ({ projectId }) => ({
+        url: `/chat/conversations?projectId=${projectId}`,
       }),
       providesTags: ["Conversations"],
     }),
@@ -37,12 +37,12 @@ export const chatApi = createApi({
         conversation: ChatConversation;
         messages: ChatMessage[];
       },
-      string
+      { conversationId: string; projectId: string }
     >({
-      query: (conversationId) => ({
-        url: `/chat/conversations/${conversationId}`,
+      query: ({ conversationId, projectId }) => ({
+        url: `/chat/conversations/${conversationId}?projectId=${projectId}`,
       }),
-      providesTags: (result, error, conversationId) => [
+      providesTags: (result, error, { conversationId }) => [
         { type: "Conversations", id: conversationId },
       ],
     }),
@@ -61,12 +61,12 @@ export const chatApi = createApi({
 
     updateConversation: builder.mutation<
       void,
-      { conversationId: string; title: string }
+      { conversationId: string; title: string; projectId: string }
     >({
-      query: ({ conversationId, title }) => ({
+      query: ({ conversationId, title, projectId }) => ({
         url: `/chat/conversations/${conversationId}`,
         method: "PUT",
-        body: { title },
+        body: { title, projectId },
       }),
       invalidatesTags: (result, error, { conversationId }) => [
         { type: "Conversations", id: conversationId },
@@ -74,10 +74,16 @@ export const chatApi = createApi({
       ],
     }),
 
-    deleteConversation: builder.mutation<void, string>({
-      query: (conversationId) => ({
+    deleteConversation: builder.mutation<
+      void,
+      { conversationId: string; projectId: string }
+    >({
+      query: ({ conversationId, projectId }) => ({
         url: `/chat/conversations/${conversationId}`,
         method: "DELETE",
+        body: {
+          projectId,
+        },
       }),
       invalidatesTags: ["Conversations"],
     }),
