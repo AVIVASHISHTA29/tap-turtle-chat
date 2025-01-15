@@ -1,6 +1,8 @@
 import { initRRWebAnalysis } from "@/lib/langchain-rrweb";
 import { NextRequest, NextResponse } from "next/server";
 
+export const maxDuration = 300;
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { sessionId: string } }

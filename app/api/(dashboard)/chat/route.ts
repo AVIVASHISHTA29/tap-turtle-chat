@@ -6,6 +6,9 @@ import { auth } from "@clerk/nextjs/server";
 import { streamText } from "ai";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
+
+export const maxDuration = 300;
+
 export async function POST(request: Request) {
   try {
     const { userId } = await auth();
