@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, House, Monitor, Video } from "lucide-react";
+import { Bot, House, Monitor, Thermometer, Video } from "lucide-react";
 
 import {
   Sidebar,
@@ -51,6 +51,12 @@ const items: SidebarItems[] = [
     url: "/errors",
     icon: Monitor,
     matchPath: (pathname) => pathname.startsWith("/errors"),
+  },
+  {
+    title: "Heatmap",
+    url: "/heatmap",
+    icon: Thermometer,
+    matchPath: (pathname) => pathname.startsWith("/heatmap"),
   },
 ];
 
