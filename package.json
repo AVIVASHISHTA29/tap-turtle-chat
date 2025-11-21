@@ -59,7 +59,6 @@
     "remark-gfm": "^4.0.0",
     "rrweb": "^2.0.0-alpha.4",
     "rrweb-player": "^1.0.0-alpha.4",
-    "sqlite3": "^5.1.7",
     "svix": "^1.45.1",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
