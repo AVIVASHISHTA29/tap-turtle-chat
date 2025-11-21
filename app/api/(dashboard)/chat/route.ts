@@ -7,7 +7,7 @@ import { streamText } from "ai";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
